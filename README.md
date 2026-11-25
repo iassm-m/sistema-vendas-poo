@@ -1,9 +1,9 @@
 # SisVendas - Sistema de Informação e Gestão Comercial em Java (POO)
 
-> **Trabalho da Disciplina de Programação Orientada a Objetos**  
-> **Avaliação A2**  
-> **Autora:** Iasmim José  
-> **Entrega:** Postagem individual no Microsoft Teams até o dia da A2 (28/11)
+> **Trabalho da Disciplina de Programação Orientada a Objetos**  > **Avaliação A2** <br>
+> **Entrega:** Postagem individual no Microsoft Teams até o dia da A2 (28/11) <br>
+> **Grupo:** IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978,  SILVANA GOMES DA SILVA - 1250109767.
+
 
 ---
 
@@ -36,7 +36,7 @@ O **SisVendas** é um sistema de informação comercial desktop desenvolvido em 
 ```
 sistema-vendas-poo/
 ├── docs/
-│   ├── SisVendas_Documentacao_ABNT.pdf   <-- PDF ABNT para postar no Teams
+│   ├── SisVendas_Documentacao_ABNT.pdf   <-- PDF ABNT 
 │   ├── DOCUMENTACAO_PROJETO_ABNT.md      <-- Documentação completa em Markdown
 │   └── diagrams/                         <-- Diagramas UML (PlantUML)
 ├── src/
@@ -95,8 +95,3 @@ sistema-vendas-poo/
 
 ---
 
-## 📦 5. O que Postar no Teams (Até 28/11)
-
-Conforme as instruções da avaliação A2, a postagem individual deve conter:
-1. **Os arquivos do projeto**: Compacte a pasta do projeto em formato `.zip` contendo os códigos-fonte, os arquivos `.frm`, o `README.md` e os scripts de compilação.
-2. **O arquivo PDF da documentação**: O arquivo `docs/SisVendas_Documentacao_ABNT.pdf` pronto, formatado estritamente nas normas ABNT.
