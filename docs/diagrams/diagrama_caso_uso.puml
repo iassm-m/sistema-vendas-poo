@@ -1,0 +1,31 @@
+@startuml DiagramaCasosDeUso_SisVendas
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Operador do Sistema / Vendedor" as Operador
+
+rectangle "SisVendas - Casos de Uso" {
+    usecase "UC01 - Gerenciar Clientes (CRUD)" as UC1
+    usecase "UC02 - Gerenciar Produtos (CRUD)" as UC2
+    usecase "UC03 - Realizar Venda (Tela de Negócio)" as UC3
+    usecase "UC04 - Validar Estoque em Tempo Real" as UC4
+    usecase "UC05 - Calcular Descontos e Total" as UC5
+    usecase "UC06 - Baixar Estoque Automaticamente" as UC6
+    usecase "UC07 - Emitir Cupom Fiscal / Comprovante" as UC7
+    usecase "UC08 - Consultar e Cancelar Vendas" as UC8
+    usecase "UC09 - Simular Persistência em Tabelas" as UC9
+}
+
+Operador --> UC1
+Operador --> UC2
+Operador --> UC3
+Operador --> UC8
+
+UC3 ..> UC4 : <<include>>
+UC3 ..> UC5 : <<include>>
+UC3 ..> UC6 : <<include>>
+UC3 ..> UC7 : <<include>>
+UC1 ..> UC9 : <<include>>
+UC2 ..> UC9 : <<include>>
+UC3 ..> UC9 : <<include>>
+@enduml

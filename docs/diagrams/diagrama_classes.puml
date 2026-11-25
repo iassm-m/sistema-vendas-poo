@@ -1,0 +1,105 @@
+@startuml DiagramaClasses_SisVendas
+title SisVendas - Diagrama de Classes (POO)
+
+abstract class EntidadeBase {
+    # id: Integer
+    # dataCriacao: LocalDateTime
+    # dataUltimaModificacao: LocalDateTime
+    + getId(): Integer
+    + setId(Integer)
+    + {abstract} validar(): void
+}
+
+class Cliente {
+    - nome: String
+    - cpf: String
+    - email: String
+    - telefone: String
+    - logradouro: String
+    - cidade: String
+    + validar(): void
+    + formatarCpf(String): String
+}
+
+class Produto {
+    - codigo: String
+    - nome: String
+    - categoria: String
+    - precoUnitario: Double
+    - quantidadeEstoque: Integer
+    - estoqueMinimo: Integer
+    + debitarEstoque(int): void
+    + creditarEstoque(int): void
+    + isEstoqueBaixo(): boolean
+    + validar(): void
+}
+
+class Pedido {
+    - codigoPedido: String
+    - dataVenda: LocalDateTime
+    - valorDesconto: Double
+    - formaPagamento: FormaPagamento
+    - status: StatusPedido
+    + adicionarItem(Produto, int): void
+    + removerItem(int): void
+    + getSubtotalBruto(): double
+    + getTotalComDesconto(): double
+    + finalizarVenda(): void
+    + cancelarVenda(): void
+    + validar(): void
+}
+
+class ItemPedido {
+    - numeroItem: Integer
+    - quantidade: Integer
+    - precoUnitario: Double
+    + getSubtotal(): Double
+}
+
+enum StatusPedido {
+    PENDENTE
+    FINALIZADO
+    CANCELADO
+}
+
+enum FormaPagamento {
+    DINHEIRO
+    PIX
+    CARTAO_DEBITO
+    CARTAO_CREDITO
+}
+
+interface DAO<T> {
+    + salvar(T): void
+    + atualizar(T): void
+    + excluir(Integer): void
+    + buscarPorId(Integer): T
+    + listarTodos(): List<T>
+}
+
+class BancoDadosMemoria <<Singleton>> {
+    - {static} instancia: BancoDadosMemoria
+    - tabelaClientes: Map<Integer, Cliente>
+    - tabelaProdutos: Map<Integer, Produto>
+    - tabelaPedidos: Map<Integer, Pedido>
+    + {static} getInstancia(): BancoDadosMemoria
+}
+
+EntidadeBase <|-- Cliente
+EntidadeBase <|-- Produto
+EntidadeBase <|-- Pedido
+
+Pedido "1" *-- "1..*" ItemPedido : composição
+ItemPedido "1" o-- "1" Produto : agregação
+Pedido "1" --> "1" Cliente : associado a
+Pedido --> StatusPedido
+Pedido --> FormaPagamento
+
+DAO <|.. ClienteDAO
+DAO <|.. ProdutoDAO
+DAO <|.. PedidoDAO
+
+ClienteDAO --> BancoDadosMemoria
+ProdutoDAO --> BancoDadosMemoria
+PedidoDAO --> BancoDadosMemoria
+@enduml
