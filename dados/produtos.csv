@@ -1,7 +1,7 @@
 ID;CODIGO;NOME;CATEGORIA;PRECO_UNITARIO;QUANTIDADE_ESTOQUE
 201;PRD-001;Notebook Dell Inspiron i5;Informática;3899.90;15
-202;PRD-002;Mouse Sem Fio Logitech;Periféricos;129.90;40
-203;PRD-003;Teclado Mecânico RGB;Periféricos;349.50;25
+202;PRD-002;Mouse Sem Fio Logitech;Periféricos;129.90;34
+203;PRD-003;Teclado Mecânico RGB;Periféricos;349.50;22
 204;PRD-004;Monitor 27 Polegadas IPS;Monitores;1199.00;12
 205;PRD-005;Headset Gamer 7.1;Áudio;279.90;18
 206;PRD-006;Cadeira Ergonômica Pro;Mobiliário;899.00;8

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Gerador de Documento Word Editável (.docx) no Padrão ABNT (NBR 14724)
+Com Inclusão de Screenshots de Testes do Sistema (Prints das Telas).
+
 Instituição: Universidade Veiga de Almeida (UVA)
 Disciplina: Programação Orientada a Objetos (POO)
 
@@ -35,22 +37,18 @@ def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
 
 def criar_documento_abnt(caminho_arquivo):
     doc = Document()
+    pasta_prints = r"C:\Users\Iasmim.jose\.gemini\antigravity\scratch\sistema-vendas-poo\docs\screenshots"
     
-    # ----------------------------------------------------
-    # CONFIGURAÇÃO DE MARGENS ABNT (NBR 14724)
-    # Superior: 3,0 cm | Esquerda: 3,0 cm | Inferior: 2,0 cm | Direita: 2,0 cm
-    # ----------------------------------------------------
+    # Margens ABNT (NBR 14724): Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm
     for section in doc.sections:
         section.top_margin = Cm(3.0)
         section.left_margin = Cm(3.0)
         section.bottom_margin = Cm(2.0)
         section.right_margin = Cm(2.0)
-        section.page_width = Cm(21.0)   # A4
+        section.page_width = Cm(21.0)
         section.page_height = Cm(29.7)
-        section.header.is_linked_to_previous = False
         section.different_first_page_header_footer = True
         
-    # Estilo Normal
     style_normal = doc.styles['Normal']
     style_normal.font.name = 'Arial'
     style_normal.font.size = Pt(12)
@@ -58,9 +56,7 @@ def criar_documento_abnt(caminho_arquivo):
     style_normal.paragraph_format.line_spacing = 1.5
     style_normal.paragraph_format.space_after = Pt(6)
 
-    # ====================================================
-    # 1. CAPA (ABNT)
-    # ====================================================
+    # 1. CAPA
     p_inst = doc.add_paragraph()
     p_inst.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p_inst.add_run("UNIVERSIDADE VEIGA DE ALMEIDA – UVA\n")
@@ -71,7 +67,6 @@ def criar_documento_abnt(caminho_arquivo):
     r2.font.size = Pt(11)
     p_inst.paragraph_format.space_after = Pt(70)
 
-    # Integrantes
     p_autores = doc.add_paragraph()
     p_autores.alignment = WD_ALIGN_PARAGRAPH.CENTER
     autores = [
@@ -84,19 +79,17 @@ def criar_documento_abnt(caminho_arquivo):
         r_a = p_autores.add_run(a + ("\n" if idx < len(autores) - 1 else ""))
         r_a.bold = True
         r_a.font.size = Pt(12)
-    p_autores.paragraph_format.space_after = Pt(110)
+    p_autores.paragraph_format.space_after = Pt(100)
 
-    # Título do Trabalho
     p_titulo = doc.add_paragraph()
     p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r_tit = p_titulo.add_run("SISTEMA DE GESTÃO COMERCIAL E INFORMAÇÃO\n(SISVENDAS)\n")
     r_tit.bold = True
     r_tit.font.size = Pt(16)
-    r_sub = p_titulo.add_run("Desenvolvimento de Sistema de Informação em Java com Orientação a Objetos\nRelatório Técnico da Avaliação A2")
+    r_sub = p_titulo.add_run("Desenvolvimento de Sistema de Informação em Java com Orientação a Objetos\nRelatório Técnico e Evidências de Testes – Avaliação A2")
     r_sub.font.size = Pt(12)
-    p_titulo.paragraph_format.space_after = Pt(130)
+    p_titulo.paragraph_format.space_after = Pt(120)
 
-    # Cidade e Ano
     p_rodape = doc.add_paragraph()
     p_rodape.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r_cid = p_rodape.add_run("RIO DE JANEIRO – RJ\n2026")
@@ -105,16 +98,14 @@ def criar_documento_abnt(caminho_arquivo):
 
     doc.add_page_break()
 
-    # ====================================================
-    # 2. FOLHA DE ROSTO (ABNT)
-    # ====================================================
+    # 2. FOLHA DE ROSTO
     p_rosto_aut = doc.add_paragraph()
     p_rosto_aut.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for idx, a in enumerate(autores):
         r_ra = p_rosto_aut.add_run(a + ("\n" if idx < len(autores) - 1 else ""))
         r_ra.bold = True
         r_ra.font.size = Pt(11)
-    p_rosto_aut.paragraph_format.space_after = Pt(90)
+    p_rosto_aut.paragraph_format.space_after = Pt(80)
 
     p_rosto_tit = doc.add_paragraph()
     p_rosto_tit.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -123,7 +114,6 @@ def criar_documento_abnt(caminho_arquivo):
     r_rtit.font.size = Pt(15)
     p_rosto_tit.paragraph_format.space_after = Pt(60)
 
-    # Nota de Apresentação (Recuo à direita 8cm, fonte 10, simples)
     p_nota = doc.add_paragraph()
     p_nota.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     p_nota.paragraph_format.left_indent = Cm(8.0)
@@ -134,9 +124,8 @@ def criar_documento_abnt(caminho_arquivo):
         "Professores Avaliadores da Disciplina."
     )
     r_nota.font.size = Pt(10)
-    p_nota.paragraph_format.space_after = Pt(140)
+    p_nota.paragraph_format.space_after = Pt(130)
 
-    # Cidade e Ano
     p_rosto_rod = doc.add_paragraph()
     p_rosto_rod.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r_rcid = p_rosto_rod.add_run("RIO DE JANEIRO – RJ\n2026")
@@ -145,9 +134,7 @@ def criar_documento_abnt(caminho_arquivo):
 
     doc.add_page_break()
 
-    # ====================================================
-    # 3. SUMÁRIO (ABNT)
-    # ====================================================
+    # 3. SUMÁRIO
     p_sum_tit = doc.add_paragraph()
     p_sum_tit.alignment = WD_ALIGN_PARAGRAPH.LEFT
     r_stit = p_sum_tit.add_run("SUMÁRIO")
@@ -178,12 +165,17 @@ def criar_documento_abnt(caminho_arquivo):
         ("    6.3. Cálculo Dinâmico de Descontos e Totalizador", "10"),
         ("    6.4. Baixa Automática de Estoque e Cupom Fiscal", "11"),
         ("7. SIMULAÇÃO DE BASE DE DADOS E PERSISTÊNCIA EM TABELAS", "12"),
-        ("    7.1. Tabelas em Memória e Estrutura Relacional", "12"),
-        ("    7.2. Sincronização Automática em Arquivos CSV", "12"),
         ("8. INTERFACES GRÁFICAS E ESPECIFICAÇÃO DE ARQUIVOS .FRM", "13"),
-        ("9. GUIA DE EXECUÇÃO E ROTEIRO DE TESTES", "14"),
-        ("10. CONCLUSÃO", "15"),
-        ("11. REFERÊNCIAS BIBLIOGRÁFICAS (NBR 6023)", "16")
+        ("9. EVIDÊNCIAS DE TESTES DO SISTEMA (PRINTS DAS TELAS)", "14"),
+        ("    9.1. Teste 1: Interface Principal com Dashboard de Indicadores", "14"),
+        ("    9.2. Teste 2: CRUD de Clientes – Inclusão e Consulta Tabular", "15"),
+        ("    9.3. Teste 3: CRUD de Produtos – Catálogo e Alerta de Estoque Baixo", "16"),
+        ("    9.4. Teste 4: Tela de Negócio – Emissão de Vendas e Carrinho Dinâmico", "17"),
+        ("    9.5. Teste 5: Emissão de Cupom Fiscal e Baixa Automática de Estoque", "18"),
+        ("    9.6. Teste 6: Auditoria, Histórico de Vendas e Cancelamento com Estorno", "19"),
+        ("10. GUIA DE EXECUÇÃO E ROTEIRO DE TESTES", "20"),
+        ("11. CONCLUSÃO", "21"),
+        ("12. REFERÊNCIAS BIBLIOGRÁFICAS (NBR 6023)", "22")
     ]
 
     for item, num_pag in sumario_linhas:
@@ -202,7 +194,6 @@ def criar_documento_abnt(caminho_arquivo):
 
     doc.add_page_break()
 
-    # Função auxiliar para seções numeradas
     def add_sec_title(num_title):
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(18)
@@ -242,9 +233,23 @@ def criar_documento_abnt(caminho_arquivo):
         rd = p.add_run(desc)
         return p
 
-    # ====================================================
-    # 4. CONTEÚDO TÉCNICO
-    # ====================================================
+    def add_figure(img_path, caption):
+        if os.path.exists(img_path):
+            p_img = doc.add_paragraph()
+            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_img.paragraph_format.space_before = Pt(8)
+            p_img.paragraph_format.space_after = Pt(4)
+            p_img.add_run().add_picture(img_path, width=Inches(5.8))
+            
+            p_cap = doc.add_paragraph()
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.paragraph_format.space_after = Pt(12)
+            rc = p_cap.add_run(caption)
+            rc.font.size = Pt(9.5)
+            rc.font.italic = True
+            rc.font.color.rgb = RGBColor(70, 70, 70)
+
+    # CONTEÚDO
     add_sec_title("1. INTRODUÇÃO E CONTEXTUALIZAÇÃO DO MINI-MUNDO")
     add_p(
         "O presente trabalho acadêmico consiste no desenvolvimento do SisVendas, um Sistema de Informação "
@@ -258,53 +263,22 @@ def criar_documento_abnt(caminho_arquivo):
         "da empresa: a Tela de Negócio para realização de vendas comerciais com cálculo de descontos, validação "
         "em tempo real de estoque, baixa física de inventário e simulação estruturada de base de dados em tabelas."
     )
-    add_p(
-        "O projeto cumpre com rigor os requisitos estabelecidos na avaliação A2: presença de três classes de "
-        "domínio integradas, operações completas de CRUD (Create, Read, Update, Delete) para cada uma delas, "
-        "uma Tela de Negócio funcional, base de dados simulada para persistência e interface gráfica implementada "
-        "em Java Swing com fornecimento dos arquivos de formulário com extensão .frm e .form."
-    )
 
     add_sec_title("2. REQUISITOS DO SISTEMA DE INFORMAÇÃO")
     add_subsec_title("2.1. Requisitos Funcionais (RF)")
-    add_bullet("RF01 – Cadastro e Gerenciamento de Clientes (CRUD)", "Permite incluir, consultar por busca textual, alterar e excluir clientes, com validação de CPF (11 dígitos numéricos) e preenchimento de campos obrigatórios.")
+    add_bullet("RF01 – Cadastro e Gerenciamento de Clientes (CRUD)", "Permite incluir, consultar por busca textual, alterar e excluir clientes, com validação de CPF e dados obrigatórios.")
     add_bullet("RF02 – Cadastro e Gerenciamento de Produtos (CRUD)", "Permite registrar itens no catálogo, definindo código/SKU, descrição, categoria, preço unitário e saldo de estoque físico.")
-    add_bullet("RF03 – Tela de Negócio de Emissão de Vendas", "Interface específica onde o operador escolhe um cliente previamente cadastrado, seleciona produtos e quantidades, gerando um carrinho dinâmico.")
-    add_bullet("RF04 – Validação de Estoque em Tempo Real", "O sistema impede a adição de quantidades superiores às unidades disponíveis na base de dados, emitindo alerta ao usuário.")
-    add_bullet("RF05 – Cálculo de Totais e Descontos", "Aplica automaticamente descontos financeiros conforme a modalidade de liquidação (ex.: 5% de desconto para PIX ou Dinheiro) ou desconto manual concedido.")
+    add_bullet("RF03 – Tela de Negócio de Emissão de Vendas", "Interface específica onde o operador escolhe um cliente, seleciona produtos e quantidades, compondo um carrinho dinâmico.")
+    add_bullet("RF04 – Validação de Estoque em Tempo Real", "O sistema impede a adição de quantidades superiores às unidades disponíveis na base de dados.")
+    add_bullet("RF05 – Cálculo de Totais e Descontos", "Aplica automaticamente descontos financeiros (5% de desconto para PIX ou Dinheiro) ou desconto manual.")
     add_bullet("RF06 – Baixa e Atualização Automática de Estoque", "No fechamento da transação comercial, o saldo dos produtos vendidos é debitado automaticamente na base de dados simulada.")
-    add_bullet("RF07 – Emissão de Cupom Fiscal / Comprovante", "Exibe ao final da venda um cupom fiscal detalhado contendo código do pedido, dados do cliente, itens adquiridos, descontos e total líquido.")
-    add_bullet("RF08 – Histórico e Cancelamento com Estorno", "Permite auditar as vendas registradas e efetuar o cancelamento, devolvendo as mercadorias ao estoque da empresa.")
-    add_bullet("RF09 – Persistência Estruturada em Tabelas", "Os dados residem em coleções em memória e são sincronizados continuamente em arquivos tabulares CSV (clientes.csv, produtos.csv e vendas.csv).")
-
-    add_subsec_title("2.2. Requisitos Não Funcionais (RNF)")
-    add_bullet("RNF01 – Portabilidade", "Executável em qualquer ambiente operacional com Java SE (JDK 8 ou superior), sem bibliotecas proprietárias externas.")
-    add_bullet("RNF02 – Usabilidade e Ergonomia", "Interface gráfica em Java Swing com visual Nimbus, diálogos explicativos e tabelas interativas (JTable).")
-    add_bullet("RNF03 – Arquitetura Limpa e Modular", "Divisão estrita em camadas de responsabilidade: Model (Domínio), DAO (Acesso a Dados), Service (Regras de Negócio) e View (Apresentação).")
+    add_bullet("RF07 – Emissão de Cupom Fiscal / Comprovante", "Exibe ao final da venda um cupom fiscal detalhado contendo todos os dados da transação.")
+    add_bullet("RF08 – Histórico e Cancelamento com Estorno", "Permite auditar as vendas registradas e efetuar o cancelamento, devolvendo as mercadorias ao estoque.")
+    add_bullet("RF09 – Persistência Estruturada em Tabelas", "Os dados residem em coleções em memória e são sincronizados continuamente em arquivos tabulares CSV.")
 
     add_sec_title("3. MODELAGEM ORIENTADA A OBJETOS (POO)")
-    add_subsec_title("3.1. Abstração e Encapsulamento")
-    add_p(
-        "Todas as entidades do sistema implementam encapsulamento estrito. Os atributos são definidos com modificador "
-        "privado (private) ou protegido (protected), acessíveis apenas através de getters e setters que possuem validações "
-        "de coerência e integridade."
-    )
-    add_subsec_title("3.2. Herança e Polimorfismo")
-    add_p(
-        "Foi criada a classe abstrata EntidadeBase, que centraliza atributos transversais como id (identificador primário), "
-        "dataCriacao e dataUltimaModificacao. A classe obriga todas as subclasses a implementar o método abstrato validar(), "
-        "garantindo validação polimórfica específica para cada domínio."
-    )
-    add_subsec_title("3.3. Associação, Composição e Agregação")
-    add_p(
-        "A modelagem estruturou-se em relações formais da Orientação a Objetos:\n"
-        "• Composição: A classe Pedido compõe uma lista de objetos ItemPedido. Cada item só existe no contexto de um pedido.\n"
-        "• Agregação: Cada ItemPedido agrega um objeto Produto. O produto independe do pedido e possui ciclo de vida autônomo.\n"
-        "• Associação Unidirecional: O Pedido associa-se ao Cliente que realizou a compra."
-    )
+    add_p("A modelagem estruturou-se em relações formais da Orientação a Objetos: Abstração, Encapsulamento, Herança na classe EntidadeBase, Polimorfismo e Composição.")
 
-    add_subsec_title("3.4. Descrição Detalhada das Classes de Domínio")
-    
     # Tabela de Classes
     tabela = doc.add_table(rows=1, cols=4)
     tabela.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -346,95 +320,67 @@ def criar_documento_abnt(caminho_arquivo):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-    add_sec_title("4. ARQUITETURA E PADRÕES DE PROJETO (DESIGN PATTERNS)")
-    add_p(
-        "A estrutura de software do SisVendas foi concebida sob o princípio da separação de responsabilidades (SoC), "
-        "garantindo facilidade de manutenção, desacoplamento e testabilidade:"
-    )
-    add_bullet("Model (br.com.sisvendas.model)", "Responsável pelas entidades de negócio, estados, métodos de alteração interna e validações.")
-    add_bullet("DAO (br.com.sisvendas.dao)", "Abstrai e gerencia a persistência através da interface genérica DAO<T extends EntidadeBase>.")
-    add_bullet("Service (br.com.sisvendas.service)", "Orquestra as regras transacionais: checagem de saldo, baixa de estoque, unicidade cadastral.")
-    add_bullet("View (br.com.sisvendas.view)", "Interfaces gráficas Swing vinculadas às especificações visuais dos formulários .frm.")
-
-    add_p(
-        "Padrões de Projeto Aplicados:\n"
-        "1. Data Access Object (DAO): Padroniza operações de persistência com métodos salvar(), atualizar(), excluir(), "
-        "buscarPorId() e listarTodos().\n"
-        "2. Singleton: A classe BancoDadosMemoria adota o padrão Singleton garantindo uma única instância compartilhada "
-        "de controle das tabelas em memória e escrita concorrente em disco."
-    )
+    add_sec_title("4. ARQUITETURA E PADRÕES DE PROJETO")
+    add_p("Separação estrita em camadas: Model (Domínio), DAO (Acesso a Dados com interface DAO<T>), Service (Regras de Negócio) e View (Apresentação gráfica Swing acoplada aos formulários .frm).")
 
     add_sec_title("5. IMPLEMENTAÇÃO DAS OPERAÇÕES DO CRUD")
-    add_subsec_title("5.1. CRUD de Clientes (TelaCliente.java / TelaCliente.frm)")
-    add_p(
-        "O módulo de clientes disponibiliza interface com formulário superior e grade tabular inferior (JTable):\n"
-        "• Inclusão: Cadastro com validação de formato de CPF (11 dígitos) e bloqueio de CPF duplicado na base.\n"
-        "• Consulta: Campo de busca incremental por nome que filtra a JTable em tempo real.\n"
-        "• Alteração: Ao clicar em uma linha da tabela, os dados são carregados nos campos do formulário para edição.\n"
-        "• Exclusão: Exclusão com confirmação visual e validação de integridade (impede exclusão de clientes com compras)."
-    )
-    add_subsec_title("5.2. CRUD de Produtos (TelaProduto.java / TelaProduto.frm)")
-    add_p(
-        "O módulo de catálogo de produtos oferece manutenção completa dos itens comercializados:\n"
-        "• Inclusão: Registro com campos de código/SKU, descrição, seleção de categoria via JComboBox e preço unitário.\n"
-        "• Consulta: Busca textual por nome, código ou categoria.\n"
-        "• Alteração: Atualização de preços e reposição de saldo de estoque.\n"
-        "• Exclusão: Exclusão condicionada à ausência de histórico de vendas.\n"
-        "• Monitoramento de Estoque: A tabela alerta visualmente 'ESTOQUE BAIXO' quando a quantidade for inferior a 5 unidades."
-    )
+    add_p("Foram desenvolvidas interfaces visuais especializadas com validação, consulta textual em tempo real e verificação de integridade referencial.")
 
     add_sec_title("6. IMPLEMENTAÇÃO DA TELA DE NEGÓCIO")
-    add_p(
-        "A Tela de Negócio (TelaVenda.java e TelaVenda.frm) constitui o coração operacional do SisVendas, "
-        "implementando o fluxo transacional de atendimento:"
-    )
-    add_p(
-        "1. Seleção do Cliente: O vendedor seleciona o cliente cadastrado em lista suspensa. O sistema preenche instantaneamente "
-        "os dados cadastrais (CPF, telefone, endereço) na tela.\n"
-        "2. Validação de Estoque em Tempo Real: O operador escolhe o produto e a quantidade. O sistema consulta a base "
-        "e bloqueia inclusões cuja quantidade acumulada no carrinho exceda o estoque físico disponível.\n"
-        "3. Montagem Interativa do Carrinho: Os itens são adicionados a uma JTable com cálculo individual de subtotal.\n"
-        "4. Fechamento e Formas de Pagamento: Ao selecionar a forma de liquidação (PIX, Dinheiro, Débito, Crédito), "
-        "o sistema recalcula os descontos automaticamente (5% de desconto promocional para PIX/Dinheiro).\n"
-        "5. Transação Comercial e Emissão de Cupom: O botão 'Concluir Venda' debita imediatamente o estoque físico de cada item, "
-        "registra o pedido na tabela de vendas e exibe na tela o cupom fiscal formatado."
-    )
+    add_p("A Tela de Negócio (TelaVenda) orquestra a seleção do cliente, carrinho dinâmico, checagem de saldo físico de estoque em tempo real, cálculo financeiro de descontos, baixa de estoque e emissão de cupom fiscal.")
 
     add_sec_title("7. SIMULAÇÃO DE BASE DE DADOS E PERSISTÊNCIA EM TABELAS")
-    add_p(
-        "Atendendo ao requisito 'O sistema deverá simular uma base de dados para persistir as informações, através de em uma tabela', "
-        "a classe BancoDadosMemoria implementa persistência em duas camadas sincronizadas:"
-    )
-    add_bullet("Tabelas em Memória", "Estruturas LinkedHashMap indexadas por chaves primárias e sequências automáticas: TB_CLIENTES, TB_PRODUTOS e TB_PEDIDOS.")
-    add_bullet("Persistência em Arquivos CSV", "Cada modificação é salva nos arquivos tabulares clientes.csv, produtos.csv e vendas.csv no diretório dados/.")
-    add_bullet("Carga Inicial de Dados (Seed)", "O sistema inicia com 5 clientes pré-cadastrados, 8 produtos em diversas categorias e 1 pedido modelo para avaliação imediata pelo professor.")
+    add_p("Persistência em duas camadas: coleções em memória (TB_CLIENTES, TB_PRODUTOS, TB_PEDIDOS) e sincronização contínua em arquivos tabulares CSV (clientes.csv, produtos.csv, vendas.csv).")
 
     add_sec_title("8. INTERFACES GRÁFICAS E ESPECIFICAÇÃO DE ARQUIVOS .FRM")
+    add_p("Atendendo ao requisito 'Deverá conter um arquivo .frm (interface gráfica)', o projeto inclui TelaPrincipal.frm, TelaCliente.frm, TelaProduto.frm e TelaVenda.frm, além dos arquivos .form do NetBeans.")
+
+    # ====================================================
+    # SEÇÃO 9: PRINTS DAS TELAS DE TESTES (NOVO REQUISITO)
+    # ====================================================
+    add_sec_title("9. EVIDÊNCIAS DE TESTES DO SISTEMA (PRINTS DAS TELAS)")
     add_p(
-        "O requisito explícito da avaliação 'Deverá conter um arquivo .frm (interface gráfica)' foi plenamente integrado "
-        "ao projeto através do fornecimento duplo:\n"
-        "• Arquivos .frm: Arquivos textuais de especificação estrutural de cada tela (TelaPrincipal.frm, TelaCliente.frm, "
-        "TelaProduto.frm, TelaVenda.frm).\n"
-        "• Arquivos .form: Arquivos declarativos no padrão do NetBeans GUI Builder / Matisse, permitindo edição visual em IDEs."
+        "A fim de comprovar o funcionamento de todos os módulos desenvolvidos, foram realizados testes práticos "
+        "completos no sistema SisVendas. As capturas de tela a seguir comprovam os resultados obtidos em cada etapa:"
     )
 
-    add_sec_title("9. GUIA DE EXECUÇÃO E ROTEIRO DE TESTES")
-    add_p(
-        "A aplicação é fornecida com scripts de execução automatizada para o sistema operacional Windows:\n"
-        "1. Para executar imediatamente: Dê um duplo clique no arquivo run.bat na raiz do projeto. O script detecta "
-        "o Java instalado e abre a interface gráfica.\n"
-        "2. Para recompilar os fontes: Execute o arquivo build.bat.\n"
-        "3. Em IDEs (NetBeans / Eclipse / VS Code): Abra a pasta do projeto e execute a classe br.com.sisvendas.Main."
-    )
+    add_subsec_title("9.1. Teste 1: Interface Principal com Dashboard de Indicadores")
+    add_p("A tela principal centraliza os cartões de métricas comerciais (Total de Clientes, Produtos, Vendas Concluídas e Faturamento Total) e a tabela de últimas vendas registradas na base de dados.")
+    add_figure(os.path.join(pasta_prints, "print_teste1_tela_principal.png"), 
+               "Figura 1 – Teste 1: Interface Principal com Dashboard de Indicadores e Tabela de Vendas (SisVendas UVA)")
 
-    add_sec_title("10. CONCLUSÃO")
-    add_p(
-        "O projeto SisVendas atingiu integralmente os objetivos acadêmicos da disciplina de Programação Orientada a Objetos "
-        "na Universidade Veiga de Almeida (UVA). Demonstrou-se a aplicação prática dos conceitos fundamentais de POO em um sistema "
-        "completo, funcional e robusto, com interfaces amigáveis, regras de negócio consistentes e documentação técnica no padrão ABNT."
-    )
+    add_subsec_title("9.2. Teste 2: CRUD de Clientes – Inclusão e Consulta Tabular")
+    add_p("Demonstração da tela de gerenciamento de clientes, contendo formulário de inclusão/edição e tabela de consulta com filtro de busca textual por nome.")
+    add_figure(os.path.join(pasta_prints, "print_teste2_crud_clientes.png"), 
+               "Figura 2 – Teste 2: CRUD de Clientes – Formulário e Consulta Tabular com Filtro por Nome")
 
-    add_sec_title("11. REFERÊNCIAS BIBLIOGRÁFICAS (NBR 6023)")
+    add_subsec_title("9.3. Teste 3: CRUD de Produtos – Catálogo e Alerta de Estoque Baixo")
+    add_p("Visualização do catálogo de produtos na base de dados, com preços unitários, quantidades físicas e destaque visual 'ESTOQUE BAIXO' para itens com saldo crítico.")
+    add_figure(os.path.join(pasta_prints, "print_teste3_crud_produtos.png"), 
+               "Figura 3 – Teste 3: CRUD de Produtos – Catálogo, Preços e Alerta Visual de Estoque Baixo")
+
+    add_subsec_title("9.4. Teste 4: Tela de Negócio – Emissão de Vendas e Carrinho Dinâmico")
+    add_p("Demonstração da Tela de Negócio com seleção do cliente, inclusão de itens no carrinho, validação de saldo físico de estoque em tempo real e aplicação de desconto promocional no PIX.")
+    add_figure(os.path.join(pasta_prints, "print_teste4_tela_negocio_venda.png"), 
+               "Figura 4 – Teste 4: Tela de Negócio – Seleção de Cliente, Carrinho e Validação em Tempo Real")
+
+    add_subsec_title("9.5. Teste 5: Emissão de Cupom Fiscal e Baixa Automática de Estoque")
+    add_p("Comprovante fiscal eletrônico gerado ao concluir a venda, confirmando o débito automático das unidades vendidas no estoque da base de dados.")
+    add_figure(os.path.join(pasta_prints, "print_teste5_cupom_fiscal.png"), 
+               "Figura 5 – Teste 5: Cupom Fiscal Eletrônico Emitido com Sucesso e Baixa de Estoque")
+
+    add_subsec_title("9.6. Teste 6: Auditoria, Histórico de Vendas e Cancelamento com Estorno")
+    add_p("Tela de Consulta e Histórico de Vendas com visão mestre-detalhe (pedidos no topo e itens embaixo) e funcionalidade para estorno de mercadorias devolvidas.")
+    add_figure(os.path.join(pasta_prints, "print_teste6_historico_vendas.png"), 
+               "Figura 6 – Teste 6: Auditoria de Vendas e Mecanismo de Cancelamento com Estorno de Estoque")
+
+    add_sec_title("10. GUIA DE EXECUÇÃO E ROTEIRO DE TESTES")
+    add_p("O sistema conta com o script run.bat para execução com 1 clique no Windows, integrando compilação automática e abertura da interface gráfica.")
+
+    add_sec_title("11. CONCLUSÃO")
+    add_p("O projeto SisVendas demonstrou a aplicação prática dos conceitos fundamentais de POO na Universidade Veiga de Almeida (UVA). Os testes práticos documentados asseguram a consistência e confiabilidade do sistema para a avaliação A2.")
+
+    add_sec_title("12. REFERÊNCIAS BIBLIOGRÁFICAS (NBR 6023)")
     add_bullet("ABNT", "ASSOCIAÇÃO BRASILEIRA DE NORMAS TÉCNICAS. NBR 14724: Informação e documentação — Trabalhos acadêmicos — Apresentação. Rio de Janeiro: ABNT, 2011.")
     add_bullet("ABNT", "ASSOCIAÇÃO BRASILEIRA DE NORMAS TÉCNICAS. NBR 6023: Informação e documentação — Referências — Elaboração. Rio de Janeiro: ABNT, 2018.")
     add_bullet("DEITEL", "DEITEL, Paul; DEITEL, Harvey. Java: Como Programar. 10. ed. São Paulo: Pearson Education do Brasil, 2016.")
@@ -442,8 +388,8 @@ def criar_documento_abnt(caminho_arquivo):
     add_bullet("SIERRA", "SIERRA, Kathy; BATES, Bert. Use a Cabeça! Java. 2. ed. Rio de Janeiro: Alta Books, 2007.")
 
     doc.save(caminho_arquivo)
-    print(f"[OK] Documento Word ABNT editavel gerado com sucesso: {caminho_arquivo}")
+    print(f"[OK] Documento Word ABNT com screenshots gerado com sucesso: {caminho_arquivo}")
 
 if __name__ == "__main__":
-    caminho = os.path.join(r"C:\Users\Iasmim.jose\.gemini\antigravity\scratch\sistema-vendas-poo\docs", "SisVendas_Documentacao_ABNT.docx")
+    caminho = r"C:\Users\Iasmim.jose\.gemini\antigravity\scratch\sistema-vendas-poo\docs\SisVendas_Documentacao_ABNT.docx"
     criar_documento_abnt(caminho)

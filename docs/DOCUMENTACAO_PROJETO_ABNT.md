@@ -192,6 +192,42 @@ Atendendo ao requisito explícito `"Deverá conter um arquivo .frm (interface gr
 
 ---
 
+### 9. EVIDÊNCIAS DE TESTES DO SISTEMA (PRINTS DAS TELAS)
+
+A fim de comprovar o funcionamento de todos os módulos desenvolvidos e atender ao requisito da avaliação A2, foram realizados testes práticos completos no sistema SisVendas. As capturas de tela a seguir comprovam os resultados obtidos em cada etapa:
+
+#### 9.1. Teste 1: Interface Principal com Dashboard de Indicadores
+A tela principal centraliza os cartões de métricas comerciais (Total de Clientes, Produtos, Vendas Concluídas e Faturamento Total) e a tabela de últimas vendas registradas na base de dados.
+![Figura 1 - Tela Principal](screenshots/print_teste1_tela_principal.png)
+*Figura 1 – Teste 1: Interface Principal com Dashboard de Indicadores e Tabela de Vendas (SisVendas UVA)*
+
+#### 9.2. Teste 2: CRUD de Clientes (Inclusão e Consulta Tabular)
+Demonstração da tela de gerenciamento de clientes, contendo formulário de inclusão/edição e tabela de consulta com filtro de busca textual por nome (exemplo: busca por "Ana").
+![Figura 2 - CRUD de Clientes](screenshots/print_teste2_crud_clientes.png)
+*Figura 2 – Teste 2: CRUD de Clientes – Formulário e Consulta Tabular com Filtro por Nome*
+
+#### 9.3. Teste 3: CRUD de Produtos e Alerta de Estoque Baixo
+Visualização do catálogo de produtos na base de dados, com preços unitários, quantidades físicas e destaque visual "ESTOQUE BAIXO" para itens com saldo crítico (inferior a 5 unidades).
+![Figura 3 - CRUD de Produtos](screenshots/print_teste3_crud_produtos.png)
+*Figura 3 – Teste 3: CRUD de Produtos – Catálogo, Preços e Alerta Visual de Estoque Baixo*
+
+#### 9.4. Teste 4: Tela de Negócio (Emissão de Vendas e Carrinho Dinâmico)
+Demonstração da Tela de Negócio com seleção do cliente "Carlos Eduardo Silva", composição de itens no carrinho, validação de saldo físico de estoque em tempo real e aplicação de desconto promocional no PIX (5%).
+![Figura 4 - Tela de Negócio](screenshots/print_teste4_tela_negocio_venda.png)
+*Figura 4 – Teste 4: Tela de Negócio – Seleção de Cliente, Carrinho e Validação em Tempo Real*
+
+#### 9.5. Teste 5: Emissão de Cupom Fiscal e Baixa Automática de Estoque
+Comprovante fiscal eletrônico gerado automaticamente ao concluir a venda, confirmando o débito das unidades vendidas no estoque da base de dados.
+![Figura 5 - Cupom Fiscal](screenshots/print_teste5_cupom_fiscal.png)
+*Figura 5 – Teste 5: Cupom Fiscal Eletrônico Emitido com Sucesso e Baixa de Estoque*
+
+#### 9.6. Teste 6: Auditoria, Histórico de Vendas e Cancelamento com Estorno
+Tela de Consulta e Histórico de Vendas com visão mestre-detalhe (pedidos no topo e itens embaixo) e funcionalidade para estorno de mercadorias devolvidas.
+![Figura 6 - Histórico](screenshots/print_teste6_historico_vendas.png)
+*Figura 6 – Teste 6: Auditoria de Vendas e Mecanismo de Cancelamento com Estorno de Estoque*
+
+---
+
 ### 10. CONCLUSÃO
 
 O desenvolvimento do **SisVendas** atingiu com excelência todos os objetivos didáticos e técnicos estabelecidos para a avaliação A2. O software demonstra como os princípios de Orientação a Objetos possibilitam a criação de sistemas modulares, reutilizáveis e robustos. As regras de integridade de dados e as operações transacionais de estoque asseguram um sistema consistente e pronto para uso acadêmico e profissional.

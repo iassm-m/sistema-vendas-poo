@@ -1,29 +1,37 @@
 # -*- coding: utf-8 -*-
 """
 Gerador de PDF de Documentação Técnica no Padrão ABNT (NBR 14724)
-Sem dependências externas - utiliza especificação PDF 1.4 pura em Python.
+Com Inclusão de Screenshots de Testes do Sistema (Subtipo XObject / DCTDecode).
 
-Autores: IASMIM DA SILVA MANN JOSÉ, REBECA MACHADO DE LIMA, SARAH GABRIELLA VIRGÍNIA DA SILVA, SILVANA GOMES DA SILVA
-Projeto: SisVendas - Programação Orientada a Objetos
+Instituição: Universidade Veiga de Almeida (UVA)
+Disciplina: Programação Orientada a Objetos (POO)
+
+Grupo:
+- IASMIM DA SILVA MANN JOSÉ - 1250109566
+- REBECA MACHADO DE LIMA - 1250103657
+- SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978
+- SILVANA GOMES DA SILVA - 1250109767
 """
 
 import sys
 import os
+import io
 import zlib
+from PIL import Image
 
 class PDFCanvas:
     def __init__(self, filename):
         self.filename = filename
-        self.objects = []
         self.pages = []
         self.current_stream = []
+        self.current_page_images = []
+        self.images = [] # Lista de dicts {name, bytes, w, h}
         
         # A4 em pontos (72 pontos por polegada)
         self.page_width = 595.28
         self.page_height = 841.89
         
         # Margens ABNT: Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm
-        # 1 cm = 28.3465 pontos
         self.margin_left = 3.0 * 28.3465   # ~85 pt
         self.margin_right = 2.0 * 28.3465  # ~56.7 pt
         self.margin_top = 3.0 * 28.3465    # ~85 pt
@@ -36,8 +44,9 @@ class PDFCanvas:
 
     def new_page(self, show_number=True):
         if self.current_stream:
-            self.pages.append((list(self.current_stream), self.page_number, self.show_page_number))
+            self.pages.append((list(self.current_stream), self.page_number, self.show_page_number, list(self.current_page_images)))
             self.current_stream = []
+            self.current_page_images = []
             self.page_number += 1
             
         self.show_page_number = show_number
@@ -46,7 +55,6 @@ class PDFCanvas:
     def escape_text(self, text):
         if not text:
             return ""
-        # Substitui caracteres especiais para PDF WinAnsi / Latin-1
         replacements = {
             '\\': '\\\\', '(': '\\(', ')': '\\)',
             '“': '"', '”': '"', '’': "'", '‘': "'", '—': '-', '–': '-',
@@ -90,7 +98,6 @@ class PDFCanvas:
         else:
             self.cursor_y -= 15
         
-        # Barra decorativa lateral azul ABNT
         self.draw_rect(self.margin_left, self.cursor_y - 3, 4, 18, fill_rgb=(0.10, 0.30, 0.50))
         self.draw_text(self.margin_left + 12, self.cursor_y, text, font='F2', size=13, r=0.10, g=0.30, b=0.50)
         self.cursor_y -= 22
@@ -139,8 +146,6 @@ class PDFCanvas:
         self.draw_text(self.margin_left + 10, self.cursor_y, "*", font='F2', size=12, r=0.1, g=0.3, b=0.5)
         self.draw_text(self.margin_left + 22, self.cursor_y, title + ": ", font='F2', size=10, r=0.1, g=0.1, b=0.1)
         
-        # Descrição com quebra simples
-        title_offset = len(title) * 6 + 30
         desc_words = desc.split()
         lines = []
         cur = []
@@ -167,39 +172,20 @@ class PDFCanvas:
                 self.draw_text(self.margin_left + 22, self.cursor_y, l, font='F1', size=10, r=0.2, g=0.2, b=0.2)
         self.cursor_y -= 16
 
-    def add_box(self, title, items):
-        if self.cursor_y < self.margin_bottom + len(items)*18 + 50:
-            self.new_page(self.show_page_number)
-        box_h = len(items)*16 + 28
-        y_top = self.cursor_y
-        self.draw_rect(self.margin_left, y_top - box_h, self.content_width, box_h, fill_rgb=(0.96, 0.97, 0.99), stroke_rgb=(0.75, 0.82, 0.90), line_width=1.0)
-        self.draw_text(self.margin_left + 10, y_top - 16, title, font='F2', size=10.5, r=0.10, g=0.25, b=0.45)
-        self.draw_line(self.margin_left + 10, y_top - 20, self.margin_left + self.content_width - 10, y_top - 20, stroke_rgb=(0.8, 0.85, 0.90), line_width=0.5)
-        
-        cur_y = y_top - 34
-        for it in items:
-            self.draw_text(self.margin_left + 15, cur_y, it, font='F3', size=9.5, r=0.15, g=0.15, b=0.15)
-            cur_y -= 16
-        self.cursor_y = y_top - box_h - 15
-
     def add_table(self, headers, rows, col_widths):
         table_h = (len(rows) + 1) * 20
         if self.cursor_y < self.margin_bottom + table_h + 30:
             self.new_page(self.show_page_number)
             
         y_pos = self.cursor_y
-        
-        # Header background
         self.draw_rect(self.margin_left, y_pos - 18, sum(col_widths), 18, fill_rgb=(0.15, 0.35, 0.55))
         
-        # Header text
         x_cur = self.margin_left
         for h, w in zip(headers, col_widths):
             self.draw_text(x_cur + 5, y_pos - 13, h, font='F2', size=9.5, r=1.0, g=1.0, b=1.0)
             x_cur += w
         y_pos -= 18
         
-        # Rows
         for r_idx, row in enumerate(rows):
             bg = (0.95, 0.97, 1.0) if r_idx % 2 == 1 else (1.0, 1.0, 1.0)
             self.draw_rect(self.margin_left, y_pos - 16, sum(col_widths), 16, fill_rgb=bg, stroke_rgb=(0.85, 0.85, 0.85), line_width=0.5)
@@ -211,60 +197,122 @@ class PDFCanvas:
             
         self.cursor_y = y_pos - 15
 
+    def add_image(self, img_path, display_w=440, display_h=270, caption=""):
+        if not os.path.exists(img_path):
+            return
+            
+        needed_h = display_h + (35 if caption else 10)
+        if self.cursor_y < self.margin_bottom + needed_h:
+            self.new_page(self.show_page_number)
+            
+        img = Image.open(img_path).convert('RGB')
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=85)
+        jpeg_bytes = buf.getvalue()
+        
+        img_idx = len(self.images) + 1
+        xobj_name = f"Im{img_idx}"
+        self.images.append({
+            'name': xobj_name,
+            'bytes': jpeg_bytes,
+            'w': img.width,
+            'h': img.height,
+            'idx': img_idx
+        })
+        self.current_page_images.append(xobj_name)
+        
+        x = self.margin_left + (self.content_width - display_w) / 2
+        y = self.cursor_y - display_h
+        
+        # PDF Operator cm: escala e translacao
+        cmd = f"q {display_w:.2f} 0 0 {display_h:.2f} {x:.2f} {y:.2f} cm /{xobj_name} Do Q"
+        self.current_stream.append(cmd)
+        
+        # Borda sutil
+        self.draw_rect(x, y, display_w, display_h, stroke_rgb=(0.75, 0.82, 0.90), line_width=1.0)
+        
+        self.cursor_y = y - 14
+        if caption:
+            cap_w = len(caption) * 5.2
+            cap_x = max(self.margin_left, self.margin_left + (self.content_width - cap_w) / 2)
+            self.draw_text(cap_x, self.cursor_y, caption, font='F4', size=9, r=0.2, g=0.25, b=0.3)
+            self.cursor_y -= 18
+        else:
+            self.cursor_y -= 8
+
     def save(self):
         if self.current_stream:
-            self.pages.append((list(self.current_stream), self.page_number, self.show_page_number))
+            self.pages.append((list(self.current_stream), self.page_number, self.show_page_number, list(self.current_page_images)))
             
-        # Gera documento PDF
-        objects = []
+        num_pages = len(self.pages)
+        num_images = len(self.images)
         
-        # 1: Catalog, 2: Pages
-        objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-        
-        # Fontes: 3: Helvetica, 4: Helvetica-Bold, 5: Courier, 6: Helvetica-Oblique
-        font_helv = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
-        font_helv_bold = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
-        font_cour = b"<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>"
-        font_helv_oblique = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>"
-        
-        # IDs dos objetos:
+        # Objetos fixos:
         # 1: Catalog
         # 2: Pages
         # 3: F1 (Helvetica)
         # 4: F2 (Helvetica-Bold)
         # 5: F3 (Courier)
         # 6: F4 (Helvetica-Oblique)
-        # Páginas começam em 7.
-        num_pages = len(self.pages)
-        page_obj_ids = [7 + i*2 for i in range(num_pages)]
-        content_obj_ids = [8 + i*2 for i in range(num_pages)]
+        # 7 .. 7 + num_images - 1: Imagens XObjects
+        # Em seguida: Pares de (Page, Content)
         
+        first_img_id = 7
+        first_page_id = first_img_id + num_images
+        
+        page_obj_ids = [first_page_id + i*2 for i in range(num_pages)]
+        content_obj_ids = [first_page_id + 1 + i*2 for i in range(num_pages)]
+        
+        objects = []
+        
+        # 1: Catalog
+        objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
+        
+        # 2: Pages
         kids_str = " ".join([f"{pid} 0 R" for pid in page_obj_ids])
         pages_obj = f"<< /Type /Pages /Kids [{kids_str}] /Count {num_pages} >>".encode('latin-1')
-        
         objects.append(pages_obj)
-        objects.append(font_helv)
-        objects.append(font_helv_bold)
-        objects.append(font_cour)
-        objects.append(font_helv_oblique)
         
-        for idx, (stream_cmds, p_num, show_num) in enumerate(self.pages):
+        # 3-6: Fontes
+        objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+        objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>")
+        objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>")
+        objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>")
+        
+        # Imagens XObjects
+        img_dict_map = {}
+        for idx, img_info in enumerate(self.images):
+            img_obj_id = first_img_id + idx
+            img_dict_map[img_info['name']] = img_obj_id
+            stream_data = img_info['bytes']
+            header_dict = f"<< /Type /XObject /Subtype /Image /Width {img_info['w']} /Height {img_info['h']} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(stream_data)} >>\nstream\n".encode('latin-1')
+            img_full_obj = header_dict + stream_data + b"\nendstream"
+            objects.append(img_full_obj)
+            
+        # Páginas
+        for idx, (stream_cmds, p_num, show_num, p_imgs) in enumerate(self.pages):
             page_id = page_obj_ids[idx]
             content_id = content_obj_ids[idx]
             
-            # Adiciona numeração de página no canto superior direito conforme ABNT
+            # Cabeçalho / Rodapé ABNT
             if show_num and p_num > 2:
                 stream_cmds.append(f"BT /F1 9 Tf 0.4 0.4 0.4 rg {self.page_width - self.margin_right - 20:.2f} {self.page_height - 35:.2f} Td ({p_num}) Tj ET")
                 stream_cmds.append(f"0.85 0.85 0.85 RG 0.5 w {self.margin_left:.2f} {self.page_height - 42:.2f} m {self.page_width - self.margin_right:.2f} {self.page_height - 42:.2f} l S")
-                stream_cmds.append(f"BT /F4 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} {self.page_height - 35:.2f} Td (SisVendas - Relatorio Tecnico ABNT) Tj ET")
+                stream_cmds.append(f"BT /F4 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} {self.page_height - 35:.2f} Td (Universidade Veiga de Almeida - SisVendas POO - Avaliacao A2) Tj ET")
                 # Rodapé
                 stream_cmds.append(f"0.85 0.85 0.85 RG 0.5 w {self.margin_left:.2f} 45 m {self.page_width - self.margin_right:.2f} 45 l S")
-                stream_cmds.append(f"BT /F1 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} 32 Td (Programacao Orientada a Objetos - Avaliacao A2 - SisVendas) Tj ET")
+                stream_cmds.append(f"BT /F1 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} 32 Td (Grupo: Iasmim Jose, Rebeca Lima, Sarah Silva, Silvana Silva) Tj ET")
 
             stream_data = "\n".join(stream_cmds).encode('latin-1', 'replace')
             compressed = zlib.compress(stream_data)
             
-            page_dict = f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {self.page_width:.2f} {self.page_height:.2f}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >> >> /Contents {content_id} 0 R >>".encode('latin-1')
+            # Monta dicionario de XObjects da pagina se houver imagens
+            xobj_str = ""
+            if p_imgs:
+                x_entries = " ".join([f"/{xname} {img_dict_map[xname]} 0 R" for xname in p_imgs if xname in img_dict_map])
+                xobj_str = f"/XObject << {x_entries} >>"
+                
+            page_dict = f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {self.page_width:.2f} {self.page_height:.2f}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >> {xobj_str} >> /Contents {content_id} 0 R >>".encode('latin-1')
             content_dict = f"<< /Length {len(compressed)} /Filter /FlateDecode >>\nstream\n".encode('latin-1') + compressed + b"\nendstream"
             
             objects.append(page_dict)
@@ -276,6 +324,8 @@ class PDFCanvas:
         body = []
         
         for i, obj in enumerate(objects):
+            if isinstance(obj, str):
+                obj = obj.encode('latin-1')
             obj_bytes = f"{i+1} 0 obj\n".encode('latin-1') + obj + b"\nendobj\n"
             offsets.append(cur_offset)
             cur_offset += len(obj_bytes)
@@ -290,39 +340,36 @@ class PDFCanvas:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, 'wb') as f:
             f.write(header + b"".join(body) + xref.encode('latin-1') + trailer.encode('latin-1'))
-        print(f"[OK] PDF ABNT gerado com sucesso: {self.filename} ({num_pages} paginas)")
+        print(f"[OK] PDF ABNT com screenshots gerado com sucesso: {self.filename} ({num_pages} paginas)")
 
 
-def gerar_relatorio_abnt(caminho_pdf):
+def gerar_relatorio_abnt_completo(caminho_pdf):
     doc = PDFCanvas(caminho_pdf)
+    pasta_prints = r"C:\Users\Iasmim.jose\.gemini\antigravity\scratch\sistema-vendas-poo\docs\screenshots"
     
     # ==========================================
-    # PÁGINA 1: CAPA (Conforme ABNT NBR 14724)
+    # PÁGINA 1: CAPA (ABNT NBR 14724)
     # ==========================================
     doc.new_page(show_number=False)
     
-    # Cabeçalho da Instituição
     doc.draw_text(doc.margin_left, 760, "UNIVERSIDADE VEIGA DE ALMEIDA - UVA", font='F2', size=12, r=0.10, g=0.30, b=0.50)
     doc.draw_text(doc.margin_left, 745, "CURSO DE CIENCIA DA COMPUTACAO / ENGENHARIA DE SOFTWARE", font='F1', size=9.5, r=0.2, g=0.2, b=0.2)
     doc.draw_text(doc.margin_left, 730, "DISCIPLINA: PROGRAMACAO ORIENTADA A OBJETOS (POO)", font='F2', size=10, r=0.1, g=0.3, b=0.5)
     
     doc.draw_line(doc.margin_left, 720, doc.page_width - doc.margin_right, 720, stroke_rgb=(0.2, 0.4, 0.6), line_width=1.5)
     
-    # Integrantes do Grupo
     doc.draw_text(doc.margin_left, 675, "INTEGRANTES DO GRUPO:", font='F2', size=11, r=0.10, g=0.30, b=0.50)
     doc.draw_text(doc.margin_left, 658, "IASMIM DA SILVA MANN JOSE - RA: 1250109566", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
     doc.draw_text(doc.margin_left, 644, "REBECA MACHADO DE LIMA - RA: 1250103657", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
     doc.draw_text(doc.margin_left, 630, "SARAH GABRIELLA VIRGINIA DA SILVA - RA: 1250106978", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
     doc.draw_text(doc.margin_left, 616, "SILVANA GOMES DA SILVA - RA: 1250109767", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
     
-    # Título Central
     doc.draw_rect(doc.margin_left, 430, doc.content_width, 110, fill_rgb=(0.95, 0.97, 1.0), stroke_rgb=(0.2, 0.4, 0.6), line_width=1.0)
     doc.draw_text(doc.margin_left + 20, 505, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=16, r=0.10, g=0.30, b=0.50)
     doc.draw_text(doc.margin_left + 20, 482, "Desenvolvimento de Sistema de Informacao em Java com Orientacao a Objetos", font='F2', size=11, r=0.2, g=0.2, b=0.2)
-    doc.draw_text(doc.margin_left + 20, 460, "CRUD Completo, Tela de Negocio, Base Simulada e Interfaces .frm / .form", font='F4', size=10, r=0.4, g=0.4, b=0.4)
+    doc.draw_text(doc.margin_left + 20, 460, "CRUD Completo, Tela de Negocio, Base Simulada e Prints dos Resultados", font='F4', size=10, r=0.4, g=0.4, b=0.4)
     doc.draw_text(doc.margin_left + 20, 445, "Trabalho Academico - Avaliacao A2", font='F2', size=10, r=0.1, g=0.3, b=0.5)
     
-    # Cidade e Ano no rodapé da capa
     doc.draw_text(doc.margin_left + 150, 100, "RIO DE JANEIRO - RJ", font='F2', size=11, r=0.2, g=0.2, b=0.2)
     doc.draw_text(doc.margin_left + 190, 85, "2026", font='F2', size=11, r=0.2, g=0.2, b=0.2)
     
@@ -339,7 +386,6 @@ def gerar_relatorio_abnt(caminho_pdf):
     
     doc.draw_text(doc.margin_left, 690, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=14, r=0.10, g=0.30, b=0.50)
     
-    # Nota de Apresentação ABNT à direita
     nota_x = doc.margin_left + 150
     nota_w = doc.content_width - 150
     doc.draw_rect(nota_x - 5, 595, nota_w + 10, 75, fill_rgb=(0.98, 0.98, 0.98), stroke_rgb=(0.85, 0.85, 0.85), line_width=0.5)
@@ -363,235 +409,138 @@ def gerar_relatorio_abnt(caminho_pdf):
         ("6. IMPLEMENTACAO DA TELA DE NEGOCIO (FLUXO TRANSACIONAL)", "7"),
         ("7. SIMULACAO DE BASE DE DADOS E PERSISTENCIA EM TABELAS", "8"),
         ("8. INTERFACES GRAFICAS SWING E ARQUIVOS .FRM / .FORM", "9"),
-        ("9. GUIA DE EXECUCAO E ROTEIRO DE TESTES", "10"),
-        ("10. CONCLUSAO", "11"),
-        ("11. REFERENCIAS BIBLIOGRAFICAS (ABNT NBR 6023)", "11"),
+        ("9. EVIDENCIAS DE TESTES DO SISTEMA (PRINTS DAS TELAS)", "10"),
+        ("10. GUIA DE EXECUCAO E ROTEIRO DE TESTES", "13"),
+        ("11. CONCLUSAO", "14"),
+        ("12. REFERENCIAS BIBLIOGRAFICAS (ABNT NBR 6023)", "14"),
     ]
     
     for tit, pg in sumario_itens:
-        doc.draw_text(doc.margin_left + 5, doc.cursor_y, tit, font='F2' if tit.startswith(('1.', '3.', '6.', '10.')) else 'F1', size=9.5, r=0.15, g=0.15, b=0.15)
+        doc.draw_text(doc.margin_left + 5, doc.cursor_y, tit, font='F2' if tit.startswith(('1.', '3.', '6.', '9.', '11.')) else 'F1', size=9.5, r=0.15, g=0.15, b=0.15)
         doc.draw_text(doc.page_width - doc.margin_right - 20, doc.cursor_y, pg, font='F2', size=9.5, r=0.1, g=0.3, b=0.5)
-        # Pontilhado
         doc.draw_line(doc.margin_left + len(tit)*5.4 + 10, doc.cursor_y + 2, doc.page_width - doc.margin_right - 30, doc.cursor_y + 2, stroke_rgb=(0.7, 0.7, 0.7), line_width=0.5)
-        doc.cursor_y -= 18
+        doc.cursor_y -= 17
 
     # ==========================================
-    # PÁGINA 3: INTRODUÇÃO E REQUISITOS
+    # PÁGINAS DE CONTEÚDO TÉCNICO
     # ==========================================
     doc.new_page(show_number=True)
     doc.add_heading1("1. INTRODUCAO E CONTEXTUALIZACAO DO MINI-MUNDO")
-    
-    doc.add_paragraph("O presente trabalho academico tem como objetivo o desenvolvimento de um Sistema de Informacao completo na linguagem Java, aplicando os principios da Programacao Orientada a Objetos (POO). O mini-mundo escolhido modela a operacao de uma distribuidora de tecnologia e suprimentos, denominada SisVendas.")
-    doc.add_paragraph("A solucao foi projetada para atender integralmente aos requisitos solicitados na avaliacao A2: presenca de classes de dominio bem estruturadas, operacoes completas de CRUD (Inclusao, Consulta, Alteracao e Exclusao), uma Tela de Negocio funcional e transacional, simulacao de persistencia em tabela/base de dados e integracao de interface grafica atraves de arquivos com extensao .frm e .form.")
+    doc.add_paragraph("O presente trabalho academico foi desenvolvido pelo grupo de discentes da Universidade Veiga de Almeida (UVA) para a disciplina de Programacao Orientada a Objetos (POO), integrando a avaliacao oficial A2. O software concebido, denominado SisVendas, modela as operacoes de comercializacao e atendimento de uma distribuidora de tecnologia.")
+    doc.add_paragraph("A solucao cumpre integralmente os requisitos solicitados: presenca de tres classes de dominio integradas (Cliente, Produto, Pedido), operacoes de CRUD completas para todas as entidades, uma Tela de Negocio transacional para emissao de vendas, base de dados simulada para persistencia de informacoes em tabelas e arquivos de interface grafica (.frm e .form).")
 
     doc.add_heading1("2. REQUISITOS DO SISTEMA DE INFORMACAO")
     doc.add_heading2("2.1. Requisitos Funcionais (RF)")
-    doc.add_bullet("RF01 - Manutencao de Clientes", "Cadastro, busca textual, edicao e remocao de clientes com validacao de CPF e dados obrigatorios.")
-    doc.add_bullet("RF02 - Manutencao de Produtos", "Cadastro de produtos, categorizacao, controle de precos e controle de estoque minimo.")
-    doc.add_bullet("RF03 - Tela de Negocio (Vendas)", "Selecao de cliente, montagem de carrinho dinamicamente e emissao de pedidos.")
-    doc.add_bullet("RF04 - Validacao em Tempo Real", "Verificacao automatica de disponibilidade de saldo de estoque antes de cada inclusao de item.")
-    doc.add_bullet("RF05 - Calculo de Descontos", "Calculo automatico de descontos por modalidade (PIX e Dinheiro com 5%) ou desconto negociado.")
-    doc.add_bullet("RF06 - Baixa e Estorno de Estoque", "Debito no fechamento do pedido e estorno em caso de cancelamento.")
-    doc.add_bullet("RF07 - Cupom Fiscal / Comprovante", "Geracao de cupom textual com todos os detalhes da transacao comercial.")
-    doc.add_bullet("RF08 - Persistencia Simulada", "Armazenamento em colecoes sincronizadas com arquivos tabulares CSV.")
+    doc.add_bullet("RF01 - CRUD de Clientes", "Cadastro, busca textual, alteracao e exclusao com validacao de CPF e campos obrigatorios.")
+    doc.add_bullet("RF02 - CRUD de Produtos", "Gerenciamento de catalogo, controle de precos, estoque fisico e monitoramento de estoque minimo.")
+    doc.add_bullet("RF03 - Tela de Negocio (Vendas)", "Selecao de cliente, carrinho dinamico, validacao de saldo em tempo real e emissao de pedidos.")
+    doc.add_bullet("RF04 - Validacao em Tempo Real", "Bloqueio automatico de adicao de produtos quando a quantidade solicitada exceder o estoque fisico.")
+    doc.add_bullet("RF05 - Calculo de Descontos", "Desconto financeiro automatico conforme a forma de pagamento (PIX e Dinheiro com 5%) ou desconto negociado.")
+    doc.add_bullet("RF06 - Baixa e Estorno de Estoque", "Debito imediato ao concluir a venda e estorno automatico em caso de cancelamento.")
+    doc.add_bullet("RF07 - Cupom Fiscal / Comprovante", "Emissao de comprovante fiscal detalhado com itens, valores e descontos aplicados.")
+    doc.add_bullet("RF08 - Persistencia em Tabelas", "Armazenamento em colecoes relacionais sincronizadas com arquivos tabulares CSV.")
 
-    doc.add_heading2("2.2. Requisitos Nao Funcionais (RNF)")
-    doc.add_bullet("RNF01 - Portabilidade", "Execucao em qualquer maquina com Java SE (JDK 8 ou superior).")
-    doc.add_bullet("RNF02 - Usabilidade e Interface", "GUI desktop com Java Swing e arquivos .frm (.form) com feedback claro.")
-    doc.add_bullet("RNF03 - Arquitetura em Camadas", "Separacao de responsabilidades em Model, DAO, Service e View.")
-
-    # ==========================================
-    # PÁGINA 4: MODELAGEM OO (CLASSES E DIAGRAMAS)
-    # ==========================================
+    # Modelagem
     doc.new_page(show_number=True)
-    doc.add_heading1("3. MODELAGEM ORIENTADA A OBJETOS")
-    doc.add_paragraph("A arquitetura de objetos foi construida sobre os pilares fundamentais da POO: Abstracao, Encapsulamento, Heranca e Polimorfismo, alem de relacoes de composicao e agregacao.")
-    
-    doc.add_heading2("3.1. Detalhamento das Classes de Dominio")
-    
+    doc.add_heading1("3. MODELAGEM ORIENTADA A OBJETOS (POO)")
+    doc.add_paragraph("A arquitetura do SisVendas foi construida sobre os pilares fundamentais da Orientacao a Objetos:")
+    doc.add_bullet("Abstracao e Encapsulamento", "Atributos privados e protegidos acessados por getters e setters que possuem validacoes de consistencia.")
+    doc.add_bullet("Heranca", "Classe abstrata EntidadeBase compartilhada por Cliente, Produto e Pedido para controle de IDs e auditoria temporal.")
+    doc.add_bullet("Polimorfismo", "Metodo abstrato validar() implementado de forma personalizada em cada classe de dominio.")
+    doc.add_bullet("Composicao e Agregacao", "O Pedido compoe ItemPedido (ciclo de vida conjunto), que por sua vez agrega Produto (ciclo autonomo).")
+
     headers_dom = ["Classe", "Tipo / Relacao", "Atributos Principais", "Metodos de Destaque"]
     rows_dom = [
-        ["EntidadeBase", "Classe Abstrata (Base)", "id, dataCriacao, dataModif.", "getId(), setId(), validar() [abstrato]"],
+        ["EntidadeBase", "Abstrata (Raiz)", "id, dataCriacao, dataModif.", "validar() [abstrato], getId(), setId()"],
         ["Cliente", "Herda EntidadeBase", "nome, cpf, email, tel, cidade", "validar(), formatarCpf(), toString()"],
         ["Produto", "Herda EntidadeBase", "codigo, nome, preco, estoque", "debitarEstoque(), creditarEstoque()"],
         ["ItemPedido", "Agregacao/Composicao", "produto, quantidade, precoUnit", "getSubtotal(), toString()"],
         ["Pedido", "Herda EntidadeBase", "cliente, itens, formaPagto, total", "adicionarItem(), finalizarVenda()"],
-        ["FormaPagto", "Enumeracao (Enum)", "DINHEIRO, PIX, CARTAO_DEB/CRED", "getDescontoPadrao()"],
+        ["FormaPagto", "Enumeracao (Enum)", "DINHEIRO, PIX, DEBITO, CREDITO", "getDescontoPadrao()"],
         ["StatusPedido", "Enumeracao (Enum)", "PENDENTE, FINALIZADO, CANCELADO", "getDescricao()"]
     ]
     doc.add_table(headers_dom, rows_dom, [70, 110, 150, 120])
-    
-    doc.add_heading2("3.2. Estrutura de Heranca e Polimorfismo")
-    doc.add_paragraph("A classe abstrata EntidadeBase centraliza o controle temporal e de chave primaria, enquanto o metodo abstrato validar() impoe a cada entidade a responsabilidade polimorfica de validar suas proprias regras de negocio.")
-    
-    doc.add_box("Especificacao das Regras de Negocio na Modelagem:", [
-        "1. Cliente.validar(): Garante que o nome esteja preenchido e que o CPF contenha 11 digitos validos.",
-        "2. Produto.validar(): Exige preco unitario estritamente maior que zero e estoque nao negativo.",
-        "3. Produto.debitarEstoque(qtd): Operacao sincronizada que lanca excecao caso estoque < qtd.",
-        "4. Pedido.adicionarItem(p, qtd): Agrupa automaticamente itens repetidos e recalcula totais.",
-        "5. Pedido.finalizarVenda(): Executa a transacao debitando os saldos fisicos de cada produto."
-    ])
 
-    # ==========================================
-    # PÁGINA 5: ARQUITETURA E DESIGN PATTERNS
-    # ==========================================
+    # Arquitetura
     doc.new_page(show_number=True)
     doc.add_heading1("4. ARQUITETURA E PADROES DE PROJETO")
-    doc.add_paragraph("O SisVendas adota uma arquitetura em camadas bem delimitadas, promovendo baixo acoplamento e alta coesao entre seus componentes:")
+    doc.add_paragraph("O software foi concebido sob a divisao formal em camadas de responsabilidade:")
+    doc.add_bullet("Model", "Entidades de negocio com suas regras de integridade e encapsulamento.")
+    doc.add_bullet("DAO", "Acesso aos dados simulados atraves da interface polimorfica DAO<T extends EntidadeBase>.")
+    doc.add_bullet("Service", "Regras transacionais de estoque, unicidade e orquestracao.")
+    doc.add_bullet("View", "Interfaces graficas Java Swing acompanhadas das especificacoes em arquivos .frm.")
+    doc.add_paragraph("Padroes de Projeto Utilizados: Data Access Object (DAO) para desacoplamento de persistencia e Singleton (BancoDadosMemoria) para unicidade de controle das tabelas em memoria e arquivos.")
+
+    # CRUDs e Tela de Negócio
+    doc.new_page(show_number=True)
+    doc.add_heading1("5. IMPLEMENTACAO DOS CRUDS E TELA DE NEGOCIO")
+    doc.add_heading2("5.1. CRUDs de Clientes e Produtos")
+    doc.add_paragraph("As telas TelaCliente e TelaProduto disponibilizam formularios para inclusao e edicao de dados, grades tabulares JTable para visualizacao geral, busca textual e exclusao com controle de integridade referencial.")
     
-    doc.add_bullet("Camada Model (Dominio)", "Encapsula o estado, as regras de integridade e os comportamentos dos objetos de negocio.")
-    doc.add_bullet("Camada DAO (Persistencia)", "Abstrai os acessos a base de dados simulada atraves da interface generica DAO<T>.")
-    doc.add_bullet("Camada Service (Negocio)", "Contem as regras transacionais, orquestrando gravacoes, consultas e validacoes complexas.")
-    doc.add_bullet("Camada View (Apresentacao)", "Interfaces graficas Java Swing acompanhadas dos arquivos de definicao .frm.")
+    doc.add_heading2("5.2. Tela de Negocio (Processamento de Vendas)")
+    doc.add_paragraph("A Tela de Negocio (TelaVenda) implementa o ciclo comercial completo: o operador seleciona o cliente, inclui itens no carrinho com checagem de saldo em tempo real, define a forma de pagamento (com desconto automatico de 5% no PIX ou Dinheiro) e conclui a venda, acionando a baixa automatica no estoque da base de dados e emitindo o cupom fiscal.")
 
-    doc.add_heading2("4.1. Padroes de Projeto Implementados")
-    doc.add_paragraph("1. Padrão Data Access Object (DAO): A interface genérica DAO<T extends EntidadeBase> define as operacoes padronizadas de CRUD (salvar, atualizar, excluir, buscarPorId e listarTodos). Suas implementacoes (ClienteDAO, ProdutoDAO e PedidoDAO) permitem que a camada de servico opere de forma totalmente desacoplada do mecanismo de persistencia.")
-    doc.add_paragraph("2. Padrão Singleton: A classe BancoDadosMemoria implementa o padrao Singleton para garantir a existencia de um unico ponto central de acesso e gerenciamento de tabelas em memoria e arquivos durante todo o ciclo de vida da aplicacao.")
-
-    doc.add_box("Diagrama Arquitetural de Camadas:", [
-        "[ VIEW / .FRM ]  -->  TelaPrincipal, TelaCliente, TelaProduto, TelaVenda",
-        "        | ",
-        "[ SERVICE ]       -->  ClienteService, ProdutoService, VendaService",
-        "        | ",
-        "[ DAO INTERFACE ] -->  DAO<T>  <--  ClienteDAO, ProdutoDAO, PedidoDAO",
-        "        | ",
-        "[ PERSISTENCIA ]  -->  BancoDadosMemoria (Singleton) <--> Arquivos CSV"
-    ])
+    doc.add_heading1("6. SIMULACAO DE BASE DE DADOS E PERSISTENCIA")
+    doc.add_paragraph("Atendendo ao requisito de simular uma base de dados para persistir as informacoes atraves de tabelas, o sistema gerencia as estruturas TB_CLIENTES, TB_PRODUTOS e TB_PEDIDOS em memoria e sincroniza automaticamente todas as alteracoes em arquivos tabulares CSV (clientes.csv, produtos.csv e vendas.csv) na pasta dados/.")
 
     # ==========================================
-    # PÁGINA 6: IMPLEMENTAÇÃO DOS CRUDS
+    # SEÇÃO 9: EVIDÊNCIAS DE TESTES E PRINTS DAS TELAS
     # ==========================================
     doc.new_page(show_number=True)
-    doc.add_heading1("5. IMPLEMENTACAO DAS OPERACOES DE CRUD")
-    doc.add_paragraph("O sistema desenvolve operacoes de CRUD completas e independentes para todas as classes de dominio principais, acessiveis atraves do menu ou barra de ferramentas da tela principal.")
-    
-    doc.add_heading2("5.1. CRUD de Clientes (TelaCliente.java / .frm)")
-    doc.add_bullet("Inclusao", "Preenchimento dos campos cadastrais com geracao automatica de ID incremental e validacao de unicidade de CPF.")
-    doc.add_bullet("Consulta / Filtro", "Campo de busca por nome com atualizacao imediata da JTable e exibicao de todos os clientes registrados.")
-    doc.add_bullet("Alteracao", "Carregamento automatico dos dados do cliente selecionado na grade para os campos do formulario, permitindo edicao e regravacao.")
-    doc.add_bullet("Exclusao", "Remocao com caixa de confirmacao e verificacao de integridade (bloqueia remocao se houver pedidos vinculados).")
+    doc.add_heading1("9. EVIDENCIAS DE TESTES DO SISTEMA (PRINTS DAS TELAS)")
+    doc.add_paragraph("A fim de comprovar o funcionamento de todos os modulos, foram realizados testes práticos completos no sistema SisVendas. As capturas de tela a seguir evidenciam os resultados obtidos em cada etapa:")
 
-    doc.add_heading2("5.2. CRUD de Produtos (TelaProduto.java / .frm)")
-    doc.add_bullet("Inclusao", "Cadastro de produtos informando codigo/SKU, descricao, categoria em combobox, preco unitario e estoque inicial.")
-    doc.add_bullet("Consulta / Filtro", "Listagem tabular completa com mecanismo de busca por nome, codigo ou categoria.")
-    doc.add_bullet("Alteracao", "Edicao agil de precos e reposicao manual de saldo de estoque.")
-    doc.add_bullet("Exclusao", "Exclusao controlada que impede a remocao de produtos que compoem o historico de vendas.")
-    doc.add_bullet("Alerta Visual", "Destaque automatico na coluna 'Situacao' indicando 'ESTOQUE BAIXO' quando a quantidade for inferior ao estoque minimo.")
+    doc.add_heading2("9.1. Teste 1: Tela Principal e Dashboard de Indicadores")
+    doc.add_paragraph("A Tela Principal centraliza as metricas de desempenho comercial (cards de clientes, produtos, vendas e faturamento) e exibe em grade a tabela de ultimas vendas registradas na base de dados.")
+    doc.add_image(os.path.join(pasta_prints, "print_teste1_tela_principal.png"), display_w=440, display_h=270, 
+                  caption="Figura 1 - Teste 1: Interface Principal com Dashboard de Indicadores e Tabela de Vendas (UVA)")
 
-    # ==========================================
-    # PÁGINA 7: IMPLEMENTAÇÃO DA TELA DE NEGÓCIO
-    # ==========================================
+    # Print 2: CRUD Clientes
     doc.new_page(show_number=True)
-    doc.add_heading1("6. IMPLEMENTACAO DA TELA DE NEGOCIO (VENDAS)")
-    doc.add_paragraph("A Tela de Negocio (TelaVenda.java e TelaVenda.frm) representa o fluxo transacional central do SisVendas, integrando cliente, produtos, estoque, calculos financeiros e emissao de documentos.")
+    doc.add_heading2("9.2. Teste 2: CRUD de Clientes (Inclusao, Consulta e Filtro)")
+    doc.add_paragraph("Demonstracao do modulo de clientes contendo formulario de inclusao/edicao e tabela de consulta com filtro de busca textual por nome (exemplo: busca por 'Ana').")
+    doc.add_image(os.path.join(pasta_prints, "print_teste2_crud_clientes.png"), display_w=440, display_h=265,
+                  caption="Figura 2 - Teste 2: CRUD de Clientes - Formulario e Consulta Tabular com Filtro por Nome")
 
-    doc.add_heading2("6.1. Fluxo de Execucao da Operacao Comercial")
-    doc.add_paragraph("1. Selecao do Cliente: O operador escolhe o cliente cadastrado em combobox. O sistema exibe instantaneamente seus dados de CPF, telefone e localizacao.")
-    doc.add_paragraph("2. Selecao de Produtos e Validacao de Estoque: O operador seleciona o produto desejado e informa a quantidade. O sistema consulta em tempo real o saldo fisico da base de dados e impede a adicao de quantidades superiores ao disponivel.")
-    doc.add_paragraph("3. Montagem do Carrinho de Compras: Os produtos adicionados sao listados em uma grade JTable interativa com colunas de item, codigo, descricao, valor unitario, quantidade e subtotal.")
-    doc.add_paragraph("4. Aplicacao de Descontos e Pagamento: O operador define a forma de pagamento (Dinheiro, PIX, Cartao). Descontos promocionais sao aplicados automaticamente (ex.: 5% a vista) ou mediante insercao manual de valor negociado.")
-    doc.add_paragraph("5. Conclusao Transacional e Baixa de Estoque: Ao acionar 'Concluir Venda', o metodo VendaService.realizarVenda() debita o estoque de cada produto na base simulada, salva o pedido finalizado e abre o Cupom Fiscal emitido.")
-
-    doc.add_box("Exemplo de Cupom Fiscal Emitido na Tela de Negocio:", [
-        "====================================================",
-        "                 SISVENDAS - CUPOM FISCAL           ",
-        "====================================================",
-        "Pedido: PED-1002        Data: 25/11/2026 14:30:15   ",
-        "Status: Finalizado                                  ",
-        "CLIENTE: Carlos Eduardo Silva (CPF: 234.567.890-12) ",
-        "ITEM DESCRICAO              QTD  UNIT(R$)  TOTAL(R$)",
-        "----------------------------------------------------",
-        "1    Mouse Sem Fio Logitech   2    129.90    259.80 ",
-        "2    Teclado Mecanico RGB     1    349.50    349.50 ",
-        "====================================================",
-        "Subtotal Bruto:                     R$     609.30   ",
-        "Desconto PIX (5%):                  R$      30.47   ",
-        "TOTAL LIQUIDO:                      R$     578.83   ",
-        "Forma de Pagamento: PIX (5% desc.)                  "
-    ])
-
-    # ==========================================
-    # PÁGINA 8: SIMULAÇÃO DE BANCO DE DADOS
-    # ==========================================
+    # Print 3: CRUD Produtos
     doc.new_page(show_number=True)
-    doc.add_heading1("7. SIMULACAO DE BASE DE DADOS E PERSISTENCIA EM TABELAS")
-    doc.add_paragraph("Conforme o enunciado 'O sistema devera simular uma base de dados para persistir as informacoes, atraves de em uma tabela', a persistencia foi implementada em duas dimensoes complementares:")
+    doc.add_heading2("9.3. Teste 3: CRUD de Produtos e Alerta de Estoque Baixo")
+    doc.add_paragraph("Visualizacao do catalogo de produtos na base de dados com indicacao de precos, categorias e destaque visual automatico 'ESTOQUE BAIXO' para itens com saldo inferior a 5 unidades.")
+    doc.add_image(os.path.join(pasta_prints, "print_teste3_crud_produtos.png"), display_w=440, display_h=265,
+                  caption="Figura 3 - Teste 3: CRUD de Produtos - Catalogo, Precos e Alerta Visual de Estoque Baixo")
 
-    doc.add_heading2("7.1. Tabelas em Memoria e Estrutura Relacional")
-    doc.add_paragraph("A classe BancoDadosMemoria armazena tabelas baseadas em LinkedHashMap<Integer, Entidade>, indexadas por chaves primarias com geradores atomicos de sequencia (AtomicInteger):")
-    doc.add_bullet("TB_CLIENTES", "Armazena os registros de clientes com chave primaria (ID).")
-    doc.add_bullet("TB_PRODUTOS", "Armazena o catalogo com saldos de estoque e precos.")
-    doc.add_bullet("TB_PEDIDOS", "Armazena o cabecalho das vendas e a relacao 1..N com itens.")
-
-    doc.add_heading2("7.2. Persistencia Fisica em Arquivos CSV")
-    doc.add_paragraph("Para que as informacoes nao sejam perdidas ao fechar o programa, o sistema sincroniza automaticamente todas as alteracoes em arquivos tabulares com delimitador ';' na pasta dados/:")
-    doc.add_bullet("clientes.csv", "ID;NOME;CPF;EMAIL;TELEFONE;LOGRADOURO;CIDADE")
-    doc.add_bullet("produtos.csv", "ID;CODIGO;NOME;CATEGORIA;PRECO_UNITARIO;QUANTIDADE_ESTOQUE")
-    doc.add_bullet("vendas.csv", "ID;CODIGO;CLIENTE_ID;DATA;TOTAL;FORMA_PAGTO;STATUS;QTD_ITENS")
-
-    doc.add_box("Dados Pre-carregados para Teste Imediato (Seed):", [
-        "* Clientes Iniciais: Ana Clara Souza, Carlos Silva, Mariana Oliveira, etc.",
-        "* Produtos Iniciais: Notebook Dell i5, Mouse Logitech, Teclado RGB, SSD 1TB, etc.",
-        "* Vendas Iniciais: Pedido modelo PED-1001 pre-cadastrado no historico."
-    ])
-
-    # ==========================================
-    # PÁGINA 9: INTERFACE GRÁFICA E ARQUIVOS .FRM
-    # ==========================================
+    # Print 4: Tela de Negócio
     doc.new_page(show_number=True)
-    doc.add_heading1("8. INTERFACES GRAFICAS E ARQUIVOS .FRM")
-    doc.add_paragraph("O requisito 'Devera conter um arquivo .frm (interface grafica)' foi plenamente contemplado. No ecossistema de desenvolvimento Java e ambientes academicos, a extensao .frm representa as definicoes declarativas de formularios visuais.")
-    
-    doc.add_heading2("8.1. Arquivos de Formularios Fornecidos")
-    headers_frm = ["Formulario", "Arquivo .FRM", "Arquivo .FORM (NetBeans)", "Finalidade"]
-    rows_frm = [
-        ["TelaPrincipal", "TelaPrincipal.frm", "TelaPrincipal.form", "Menu geral e Dashboard de metricas"],
-        ["TelaCliente", "TelaCliente.frm", "TelaCliente.form", "Formulario e tabela do CRUD de Clientes"],
-        ["TelaProduto", "TelaProduto.frm", "TelaProduto.form", "Formulario e tabela do CRUD de Produtos"],
-        ["TelaVenda", "TelaVenda.frm", "TelaVenda.form", "Tela de Negocio de Venda e Carrinho"],
-        ["TelaConsulta", "TelaConsultaVendas.frm", "TelaConsultaVendas.form", "Auditoria e cancelamento de vendas"]
-    ]
-    doc.add_table(headers_frm, rows_frm, [85, 105, 120, 140])
+    doc.add_heading2("9.4. Teste 4: Tela de Negocio (Emissao de Vendas e Carrinho)")
+    doc.add_paragraph("Demonstracao da Tela de Negocio com selecao do cliente 'Carlos Eduardo Silva', composicao de itens no carrinho, validacao de estoque em tempo real e aplicacao de 5% de desconto no pagamento via PIX.")
+    doc.add_image(os.path.join(pasta_prints, "print_teste4_tela_negocio_venda.png"), display_w=440, display_h=275,
+                  caption="Figura 4 - Teste 4: Tela de Negocio - Selecao de Cliente, Carrinho e Validacao em Tempo Real")
 
-    doc.add_heading2("8.2. Caracteristicas Visuais dos Formularios Swing")
-    doc.add_bullet("Look and Feel", "Configurado prioritariamente para Nimbus ou Native OS para aspecto profissional.")
-    doc.add_bullet("Organizacao de Layout", "Uso inteligente de BorderLayout, GridBagLayout e FlowLayout com espacamentos consistentes.")
-    doc.add_bullet("Interatividade Tabular", "Selecao de linhas em JTable atualiza automaticamente os formularios.")
-
-    # ==========================================
-    # PÁGINA 10: GUIA DE TESTES E EXECUÇÃO
-    # ==========================================
+    # Print 5: Cupom Fiscal
     doc.new_page(show_number=True)
-    doc.add_heading1("9. GUIA DE EXECUCAO E ROTEIRO DE TESTES")
-    doc.add_paragraph("Para facilitar a correcao e validacao pelo professor avaliador, o projeto conta com facilidades de execucao direta em qualquer plataforma:")
+    doc.add_heading2("9.5. Teste 5: Emissao de Cupom Fiscal e Baixa Automatica de Estoque")
+    doc.add_paragraph("Comprovante fiscal gerado automaticamente ao concluir a venda, confirmando o debito das unidades vendidas no estoque fisico da base de dados.")
+    doc.add_image(os.path.join(pasta_prints, "print_teste5_cupom_fiscal.png"), display_w=400, display_h=300,
+                  caption="Figura 5 - Teste 5: Cupom Fiscal Eletronico Emitido com Sucesso e Baixa de Estoque")
 
-    doc.add_heading2("9.1. Execucao pelo Windows (Scripts Batch)")
-    doc.add_paragraph("1. Duplo clique em 'run.bat': O script compila automaticamente os fontes em 'bin/' e inicia a aplicacao.")
-    doc.add_paragraph("2. Em caso de necessidade de recompilacao limpa, execute 'build.bat'.")
-
-    doc.add_heading2("9.2. Execucao em IDEs (NetBeans / Eclipse / VS Code)")
-    doc.add_paragraph("Abra a pasta 'sistema-vendas-poo' como projeto Maven ou projeto padrao Java. Execute a classe principal 'br.com.sisvendas.Main'.")
-
-    doc.add_heading2("9.3. Roteiro de Validacao Recomendado")
-    doc.add_box("Passo a Passo de Validacao pelo Avaliador:", [
-        "Passo 1: Abrir a TelaPrincipal e conferir os 4 cartoes de metricas do Dashboard.",
-        "Passo 2: Clicar em 'Clientes' e incluir um novo cliente (testar validacao de CPF).",
-        "Passo 3: Clicar em 'Produtos' e verificar os itens pre-carregados e o estoque.",
-        "Passo 4: Clicar em 'Nova Venda (Negocio)', escolher o cliente e selecionar 2 produtos.",
-        "Passo 5: Observar a validacao de estoque (tente pedir 999 unidades para ver o bloqueio).",
-        "Passo 6: Alterar a forma de pagamento para PIX e conferir o calculo do desconto.",
-        "Passo 7: Concluir a venda, conferir o cupom fiscal impresso e a baixa automatica de estoque."
-    ])
-
-    # ==========================================
-    # PÁGINA 11: CONCLUSÃO E REFERÊNCIAS
-    # ==========================================
+    # Print 6: Histórico
     doc.new_page(show_number=True)
-    doc.add_heading1("10. CONCLUSAO")
-    doc.add_paragraph("O projeto SisVendas demonstrou a aplicacao pratica e harmoniosa dos conceitos essenciais da Programacao Orientada a Objetos para a resolucao de problemas reais da engenharia de software.")
-    doc.add_paragraph("A modularizacao em camadas, a reutilizacao de codigo por heranca na classe EntidadeBase, a persistencia desacoplada via DAO e a robustez da Tela de Negocio comprovam o dominio sobre os requisitos avaliados na A2. A solucao final entrega um software confiavel, intuitivo, extensivel e plenamente documentado segundo as normas academicas da ABNT.")
+    doc.add_heading2("9.6. Teste 6: Auditoria, Historico e Cancelamento com Estorno")
+    doc.add_paragraph("Tela de Consulta e Historico de Vendas com divisao em duas tabelas sincronizadas (vendas no topo e itens embaixo) e botao para estorno de mercadorias.")
+    doc.add_image(os.path.join(pasta_prints, "print_teste6_historico_vendas.png"), display_w=440, display_h=260,
+                  caption="Figura 6 - Teste 6: Auditoria de Vendas e Mecanismo de Cancelamento com Estorno de Estoque")
 
-    doc.add_heading1("11. REFERENCIAS BIBLIOGRAFICAS (ABNT NBR 6023)")
+    # Guia e Conclusão
+    doc.new_page(show_number=True)
+    doc.add_heading1("10. GUIA DE EXECUCAO E ROTEIRO DE TESTES")
+    doc.add_paragraph("A aplicacao conta com facilidades de execucao direta no Windows:")
+    doc.add_paragraph("1. Execucao Imediata: Duplo clique no script run.bat na raiz do projeto. O script compila e inicia o sistema com demonstracao completa no terminal e abertura da interface grafica.")
+    doc.add_paragraph("2. Em IDEs (NetBeans / Eclipse / VS Code): Abra a pasta do projeto e execute br.com.sisvendas.Main.")
+
+    doc.add_heading1("11. CONCLUSAO")
+    doc.add_paragraph("O projeto SisVendas atingiu integralmente os objetivos pedagogicos da disciplina de Programacao Orientada a Objetos na Universidade Veiga de Almeida (UVA). Os testes praticos realizados e documentados comprovam a robustez das classes de dominio, a eficacia da Tela de Negocio e a consistencia da persistencia em tabelas.")
+
+    doc.add_heading1("12. REFERENCIAS BIBLIOGRAFICAS (ABNT NBR 6023)")
     doc.add_bullet("ABNT", "ASSOCIACAO BRASILEIRA DE NORMAS TECNICAS. NBR 14724: Informacao e documentacao - Trabalhos academicos - Apresentacao. Rio de Janeiro: ABNT, 2011.")
     doc.add_bullet("ABNT", "ASSOCIACAO BRASILEIRA DE NORMAS TECNICAS. NBR 6023: Informacao e documentacao - Referencias - Elaboracao. Rio de Janeiro: ABNT, 2018.")
     doc.add_bullet("DEITEL", "DEITEL, Paul; DEITEL, Harvey. Java: Como Programar. 10. ed. Sao Paulo: Pearson Education do Brasil, 2016.")
@@ -601,5 +550,5 @@ def gerar_relatorio_abnt(caminho_pdf):
     doc.save()
 
 if __name__ == "__main__":
-    caminho = sys.argv[1] if len(sys.argv) > 1 else "docs/SisVendas_Documentacao_ABNT.pdf"
-    gerar_relatorio_abnt(caminho)
+    caminho = sys.argv[1] if len(sys.argv) > 1 else r"C:\Users\Iasmim.jose\.gemini\antigravity\scratch\sistema-vendas-poo\docs\SisVendas_Documentacao_ABNT.pdf"
+    gerar_relatorio_abnt_completo(caminho)
