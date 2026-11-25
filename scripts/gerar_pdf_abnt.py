@@ -302,8 +302,8 @@ def gerar_relatorio_abnt(caminho_pdf):
     doc.new_page(show_number=False)
     
     # Cabeçalho da Instituição
-    doc.draw_text(doc.margin_left, 760, "CENTRO UNIVERSITARIO - FACULDADE DE TECNOLOGIA", font='F2', size=11, r=0.2, g=0.2, b=0.2)
-    doc.draw_text(doc.margin_left, 745, "CURSO DE CIENCIA DA COMPUTACAO / ANALISE E DESENVOLVIMENTO DE SISTEMAS", font='F1', size=9.5, r=0.3, g=0.3, b=0.3)
+    doc.draw_text(doc.margin_left, 760, "UNIVERSIDADE VEIGA DE ALMEIDA - UVA", font='F2', size=12, r=0.10, g=0.30, b=0.50)
+    doc.draw_text(doc.margin_left, 745, "CURSO DE CIENCIA DA COMPUTACAO / ENGENHARIA DE SOFTWARE", font='F1', size=9.5, r=0.2, g=0.2, b=0.2)
     doc.draw_text(doc.margin_left, 730, "DISCIPLINA: PROGRAMACAO ORIENTADA A OBJETOS (POO)", font='F2', size=10, r=0.1, g=0.3, b=0.5)
     
     doc.draw_line(doc.margin_left, 720, doc.page_width - doc.margin_right, 720, stroke_rgb=(0.2, 0.4, 0.6), line_width=1.5)
@@ -323,8 +323,8 @@ def gerar_relatorio_abnt(caminho_pdf):
     doc.draw_text(doc.margin_left + 20, 445, "Trabalho Academico - Avaliacao A2", font='F2', size=10, r=0.1, g=0.3, b=0.5)
     
     # Cidade e Ano no rodapé da capa
-    doc.draw_text(doc.margin_left + 180, 100, "BRASIL", font='F2', size=11, r=0.2, g=0.2, b=0.2)
-    doc.draw_text(doc.margin_left + 185, 85, "2026", font='F2', size=11, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left + 150, 100, "RIO DE JANEIRO - RJ", font='F2', size=11, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left + 190, 85, "2026", font='F2', size=11, r=0.2, g=0.2, b=0.2)
     
     # ==========================================
     # PÁGINA 2: FOLHA DE ROSTO E SUMÁRIO
@@ -340,13 +340,13 @@ def gerar_relatorio_abnt(caminho_pdf):
     doc.draw_text(doc.margin_left, 690, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=14, r=0.10, g=0.30, b=0.50)
     
     # Nota de Apresentação ABNT à direita
-    nota_x = doc.margin_left + 160
-    nota_w = doc.content_width - 160
+    nota_x = doc.margin_left + 150
+    nota_w = doc.content_width - 150
     doc.draw_rect(nota_x - 5, 595, nota_w + 10, 75, fill_rgb=(0.98, 0.98, 0.98), stroke_rgb=(0.85, 0.85, 0.85), line_width=0.5)
-    doc.draw_text(nota_x, 655, "Trabalho pratico apresentado a disciplina de", font='F1', size=9, r=0.3, g=0.3, b=0.3)
-    doc.draw_text(nota_x, 642, "Programacao Orientada a Objetos como requisito", font='F1', size=9, r=0.3, g=0.3, b=0.3)
-    doc.draw_text(nota_x, 629, "parcial para avaliacao da A2.", font='F1', size=9, r=0.3, g=0.3, b=0.3)
-    doc.draw_text(nota_x, 612, "Entrega via Microsoft Teams.", font='F2', size=9, r=0.1, g=0.3, b=0.5)
+    doc.draw_text(nota_x, 655, "Trabalho academico apresentado a Universidade", font='F1', size=9, r=0.3, g=0.3, b=0.3)
+    doc.draw_text(nota_x, 642, "Veiga de Almeida (UVA) como requisito parcial", font='F1', size=9, r=0.3, g=0.3, b=0.3)
+    doc.draw_text(nota_x, 629, "para obtencao de nota na Avaliacao A2.", font='F1', size=9, r=0.3, g=0.3, b=0.3)
+    doc.draw_text(nota_x, 612, "Disciplina: Programacao Orientada a Objetos.", font='F2', size=9, r=0.1, g=0.3, b=0.5)
     
     doc.draw_line(doc.margin_left, 570, doc.page_width - doc.margin_right, 570, stroke_rgb=(0.8, 0.8, 0.8), line_width=0.8)
     
