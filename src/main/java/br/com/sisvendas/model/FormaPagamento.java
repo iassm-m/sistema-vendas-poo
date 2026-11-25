@@ -3,7 +3,7 @@ package br.com.sisvendas.model;
 /**
  * Enumeração das formas de pagamento aceitas no SisVendas.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public enum FormaPagamento {
     DINHEIRO("Dinheiro (5% desc.)", 0.05),

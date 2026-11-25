@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Camada de Serviço para regras de negócio relacionadas a Clientes.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class ClienteService {
 

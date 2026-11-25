@@ -3,7 +3,7 @@
 Gerador de PDF de Documentação Técnica no Padrão ABNT (NBR 14724)
 Sem dependências externas - utiliza especificação PDF 1.4 pura em Python.
 
-Autora: Iasmim José
+Autores: IASMIM DA SILVA MANN JOSÉ, REBECA MACHADO DE LIMA, SARAH GABRIELLA VIRGÍNIA DA SILVA, SILVANA GOMES DA SILVA
 Projeto: SisVendas - Programação Orientada a Objetos
 """
 
@@ -259,7 +259,7 @@ class PDFCanvas:
                 stream_cmds.append(f"BT /F4 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} {self.page_height - 35:.2f} Td (SisVendas - Relatorio Tecnico ABNT) Tj ET")
                 # Rodapé
                 stream_cmds.append(f"0.85 0.85 0.85 RG 0.5 w {self.margin_left:.2f} 45 m {self.page_width - self.margin_right:.2f} 45 l S")
-                stream_cmds.append(f"BT /F1 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} 32 Td (Programacao Orientada a Objetos - Avaliacao A2 - Autora: Iasmim Jose) Tj ET")
+                stream_cmds.append(f"BT /F1 8 Tf 0.5 0.5 0.5 rg {self.margin_left:.2f} 32 Td (Programacao Orientada a Objetos - Avaliacao A2 - SisVendas) Tj ET")
 
             stream_data = "\n".join(stream_cmds).encode('latin-1', 'replace')
             compressed = zlib.compress(stream_data)
@@ -308,15 +308,19 @@ def gerar_relatorio_abnt(caminho_pdf):
     
     doc.draw_line(doc.margin_left, 720, doc.page_width - doc.margin_right, 720, stroke_rgb=(0.2, 0.4, 0.6), line_width=1.5)
     
-    # Autora
-    doc.draw_text(doc.margin_left, 660, "AUTORA: IASMIM JOSE", font='F2', size=13, r=0.15, g=0.15, b=0.15)
+    # Integrantes do Grupo
+    doc.draw_text(doc.margin_left, 675, "INTEGRANTES DO GRUPO:", font='F2', size=11, r=0.10, g=0.30, b=0.50)
+    doc.draw_text(doc.margin_left, 658, "IASMIM DA SILVA MANN JOSE - RA: 1250109566", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
+    doc.draw_text(doc.margin_left, 644, "REBECA MACHADO DE LIMA - RA: 1250103657", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
+    doc.draw_text(doc.margin_left, 630, "SARAH GABRIELLA VIRGINIA DA SILVA - RA: 1250106978", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
+    doc.draw_text(doc.margin_left, 616, "SILVANA GOMES DA SILVA - RA: 1250109767", font='F2', size=9.5, r=0.15, g=0.15, b=0.15)
     
     # Título Central
-    doc.draw_rect(doc.margin_left, 450, doc.content_width, 110, fill_rgb=(0.95, 0.97, 1.0), stroke_rgb=(0.2, 0.4, 0.6), line_width=1.0)
-    doc.draw_text(doc.margin_left + 20, 525, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=16, r=0.10, g=0.30, b=0.50)
-    doc.draw_text(doc.margin_left + 20, 502, "Desenvolvimento de Sistema de Informacao em Java com Orientacao a Objetos", font='F2', size=11, r=0.2, g=0.2, b=0.2)
-    doc.draw_text(doc.margin_left + 20, 480, "CRUD Completo, Tela de Negocio, Base Simulada e Interfaces .frm / .form", font='F4', size=10, r=0.4, g=0.4, b=0.4)
-    doc.draw_text(doc.margin_left + 20, 465, "Trabalho Academico - Avaliacao A2", font='F2', size=10, r=0.1, g=0.3, b=0.5)
+    doc.draw_rect(doc.margin_left, 430, doc.content_width, 110, fill_rgb=(0.95, 0.97, 1.0), stroke_rgb=(0.2, 0.4, 0.6), line_width=1.0)
+    doc.draw_text(doc.margin_left + 20, 505, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=16, r=0.10, g=0.30, b=0.50)
+    doc.draw_text(doc.margin_left + 20, 482, "Desenvolvimento de Sistema de Informacao em Java com Orientacao a Objetos", font='F2', size=11, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left + 20, 460, "CRUD Completo, Tela de Negocio, Base Simulada e Interfaces .frm / .form", font='F4', size=10, r=0.4, g=0.4, b=0.4)
+    doc.draw_text(doc.margin_left + 20, 445, "Trabalho Academico - Avaliacao A2", font='F2', size=10, r=0.1, g=0.3, b=0.5)
     
     # Cidade e Ano no rodapé da capa
     doc.draw_text(doc.margin_left + 180, 100, "BRASIL", font='F2', size=11, r=0.2, g=0.2, b=0.2)
@@ -327,7 +331,12 @@ def gerar_relatorio_abnt(caminho_pdf):
     # ==========================================
     doc.new_page(show_number=False)
     
-    doc.draw_text(doc.margin_left, 760, "IASMIM JOSE", font='F2', size=12, r=0.15, g=0.15, b=0.15)
+    doc.draw_text(doc.margin_left, 780, "INTEGRANTES DO GRUPO:", font='F2', size=9.5, r=0.10, g=0.30, b=0.50)
+    doc.draw_text(doc.margin_left, 767, "IASMIM DA SILVA MANN JOSE (1250109566)", font='F1', size=8.5, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left, 755, "REBECA MACHADO DE LIMA (1250103657)", font='F1', size=8.5, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left, 743, "SARAH GABRIELLA VIRGINIA DA SILVA (1250106978)", font='F1', size=8.5, r=0.2, g=0.2, b=0.2)
+    doc.draw_text(doc.margin_left, 731, "SILVANA GOMES DA SILVA (1250109767)", font='F1', size=8.5, r=0.2, g=0.2, b=0.2)
+    
     doc.draw_text(doc.margin_left, 690, "SISTEMA DE GESTAO COMERCIAL (SISVENDAS)", font='F2', size=14, r=0.10, g=0.30, b=0.50)
     
     # Nota de Apresentação ABNT à direita
@@ -337,7 +346,7 @@ def gerar_relatorio_abnt(caminho_pdf):
     doc.draw_text(nota_x, 655, "Trabalho pratico apresentado a disciplina de", font='F1', size=9, r=0.3, g=0.3, b=0.3)
     doc.draw_text(nota_x, 642, "Programacao Orientada a Objetos como requisito", font='F1', size=9, r=0.3, g=0.3, b=0.3)
     doc.draw_text(nota_x, 629, "parcial para avaliacao da A2.", font='F1', size=9, r=0.3, g=0.3, b=0.3)
-    doc.draw_text(nota_x, 612, "Entrega individual via Microsoft Teams.", font='F2', size=9, r=0.1, g=0.3, b=0.5)
+    doc.draw_text(nota_x, 612, "Entrega via Microsoft Teams.", font='F2', size=9, r=0.1, g=0.3, b=0.5)
     
     doc.draw_line(doc.margin_left, 570, doc.page_width - doc.margin_right, 570, stroke_rgb=(0.8, 0.8, 0.8), line_width=0.8)
     

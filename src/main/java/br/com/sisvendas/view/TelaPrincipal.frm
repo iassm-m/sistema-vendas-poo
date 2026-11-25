@@ -1,7 +1,7 @@
 # ==============================================================================
 # SisVendas - Definição do Formulário de Interface Gráfica (.frm)
 # Formulário: TelaPrincipal.frm
-# Autora: Iasmim José
+# Grupo: IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
 # Disciplina: Programação Orientada a Objetos
 # ==============================================================================
 
@@ -26,7 +26,7 @@ Component.1.Menu.2.Item.2=JMenuItem:itemConsultarVendas (Text="Histórico e Cons
 
 Component.2=JPanel:pnlHeader (Position=NORTH, Background=#184C78)
 Component.2.Label.1=JLabel:lblTitulo (Text="SisVendas - Sistema de Gestão Comercial", Font=Segoe UI Bold 22)
-Component.2.Label.2=JLabel:lblSubtitulo (Text="Programação Orientada a Objetos - Iasmim José", Font=Segoe UI 13)
+Component.2.Label.2=JLabel:lblSubtitulo (Text="Programação Orientada a Objetos - Iasmim, Rebeca, Sarah, Silvana", Font=Segoe UI 13)
 
 Component.3=JToolBar:toolBar (Position=CENTER_NORTH)
 Component.3.Button.1=JButton:btnNavClientes (Text="👤 Clientes")

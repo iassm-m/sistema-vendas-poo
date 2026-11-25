@@ -13,7 +13,7 @@ import java.util.List;
  * Interface gráfica para o CRUD completo da classe Cliente.
  * Operações: Inclusão, Consulta/Filtro, Alteração e Exclusão.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaCliente extends JFrame {
 

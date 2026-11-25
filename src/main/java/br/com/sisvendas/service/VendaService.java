@@ -10,7 +10,7 @@ import java.util.List;
  * Responsável por orquestrar a realização da venda, validações de estoque,
  * cálculo de descontos, finalização e estorno.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class VendaService {
 

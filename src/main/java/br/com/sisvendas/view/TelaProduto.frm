@@ -1,7 +1,7 @@
 # ==============================================================================
 # SisVendas - Definição do Formulário de Interface Gráfica (.frm)
 # Formulário: TelaProduto.frm (CRUD Completo de Produtos)
-# Autora: Iasmim José
+# Grupo: IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
 # Disciplina: Programação Orientada a Objetos
 # ==============================================================================
 

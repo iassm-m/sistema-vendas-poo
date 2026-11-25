@@ -15,7 +15,7 @@ import java.util.List;
  * Tela Principal do SisVendas (Menu e Dashboard).
  * Interface gráfica desenvolvida com Java Swing.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaPrincipal extends JFrame {
 
@@ -90,7 +90,7 @@ public class TelaPrincipal extends JFrame {
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(Color.WHITE);
 
-        JLabel lblSubtitulo = new JLabel("Trabalho da Disciplina de Programação Orientada a Objetos - Autora: Iasmim José");
+        JLabel lblSubtitulo = new JLabel("Trabalho de POO - Grupo: Iasmim José, Rebeca Lima, Sarah Silva, Silvana Silva");
         lblSubtitulo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitulo.setForeground(new Color(220, 230, 242));
 
@@ -253,7 +253,7 @@ public class TelaPrincipal extends JFrame {
     private void exibirSobre() {
         String msg = "SisVendas - Sistema de Informação Comercial\n" +
                 "Desenvolvido para a Disciplina de Programação Orientada a Objetos\n\n" +
-                "Autora: Iasmim José\n" +
+                "Grupo:\n - IASMIM DA SILVA MANN JOSÉ (1250109566)\n - REBECA MACHADO DE LIMA (1250103657)\n - SARAH GABRIELLA VIRGÍNIA DA SILVA (1250106978)\n - SILVANA GOMES DA SILVA (1250109767)\n\n" +
                 "Requisitos Atendidos:\n" +
                 " - Mini-mundo de Gestão de Vendas com 3 classes de domínio (Cliente, Produto, Pedido)\n" +
                 " - CRUD Completo para todas as classes\n" +

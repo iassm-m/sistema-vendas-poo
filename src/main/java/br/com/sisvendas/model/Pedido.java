@@ -10,7 +10,7 @@ import java.util.List;
  * Representa a Venda / Pedido no domínio do sistema SisVendas.
  * Herda de EntidadeBase e compõe Cliente e Itens de Pedido.
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class Pedido extends EntidadeBase {
     private static final long serialVersionUID = 1L;

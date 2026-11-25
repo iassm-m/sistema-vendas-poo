@@ -8,9 +8,9 @@ import javax.swing.UIManager;
  * Ponto de entrada (Main) do Sistema de Informação SisVendas.
  * 
  * Disciplina: Programação Orientada a Objetos
- * Aluna: Iasmim José
+ * Grupo: IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  * 
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class Main {
     public static void main(String[] args) {

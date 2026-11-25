@@ -8,7 +8,7 @@ import java.util.List;
  * Demonstra abstração, polimorfismo e interfaces na POO.
  * 
  * @param <T> Tipo da entidade que estende EntidadeBase
- * @author Iasmim José
+ * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public interface DAO<T extends EntidadeBase> {
 
