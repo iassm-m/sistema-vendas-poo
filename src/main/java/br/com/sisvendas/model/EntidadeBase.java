@@ -63,7 +63,7 @@ public abstract class EntidadeBase implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EntidadeBase that = (EntidadeBase) o;
-        return Objects.equals(id, that.id);
+        return id != null && Objects.equals(id, that.id);
     }
 
     @Override

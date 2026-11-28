@@ -82,7 +82,8 @@ public class Produto extends EntidadeBase {
     }
 
     public void setEstoqueMinimo(Integer estoqueMinimo) {
-        this.estoqueMinimo = estoqueMinimo;
+        this.estoqueMinimo = estoqueMinimo != null ? estoqueMinimo : 5;
+        setDataUltimaModificacao(java.time.LocalDateTime.now());
     }
 
     /**
@@ -94,11 +95,12 @@ public class Produto extends EntidadeBase {
         if (quantidade <= 0) {
             throw new IllegalArgumentException("A quantidade a debitar deve ser maior que zero.");
         }
-        if (this.quantidadeEstoque < quantidade) {
+        int atual = this.quantidadeEstoque != null ? this.quantidadeEstoque : 0;
+        if (atual < quantidade) {
             throw new IllegalStateException("Estoque insuficiente para o produto: " + nome + 
-                ". Disponível: " + this.quantidadeEstoque + ", Solicitado: " + quantidade);
+                ". Disponível: " + atual + ", Solicitado: " + quantidade);
         }
-        this.quantidadeEstoque -= quantidade;
+        this.quantidadeEstoque = atual - quantidade;
         setDataUltimaModificacao(java.time.LocalDateTime.now());
     }
 
@@ -110,12 +112,13 @@ public class Produto extends EntidadeBase {
         if (quantidade <= 0) {
             throw new IllegalArgumentException("A quantidade a creditar deve ser maior que zero.");
         }
-        this.quantidadeEstoque += quantidade;
+        int atual = this.quantidadeEstoque != null ? this.quantidadeEstoque : 0;
+        this.quantidadeEstoque = atual + quantidade;
         setDataUltimaModificacao(java.time.LocalDateTime.now());
     }
 
     public boolean isEstoqueBaixo() {
-        return quantidadeEstoque <= estoqueMinimo;
+        return quantidadeEstoque != null && estoqueMinimo != null && quantidadeEstoque <= estoqueMinimo;
     }
 
     @Override
@@ -128,6 +131,9 @@ public class Produto extends EntidadeBase {
         }
         if (quantidadeEstoque == null || quantidadeEstoque < 0) {
             throw new IllegalArgumentException("A quantidade de estoque não pode ser negativa.");
+        }
+        if (estoqueMinimo != null && estoqueMinimo < 0) {
+            throw new IllegalArgumentException("O estoque mínimo não pode ser negativo.");
         }
     }
 

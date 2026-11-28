@@ -17,7 +17,7 @@ public class Pedido extends EntidadeBase {
 
     private String codigoPedido;
     private Cliente cliente;
-    private final List<ItemPedido> itens = new ArrayList<>();
+    private final ArrayList<ItemPedido> itens = new ArrayList<>();
     private LocalDateTime dataVenda;
     private Double valorDesconto;
     private FormaPagamento formaPagamento;
@@ -138,6 +138,19 @@ public class Pedido extends EntidadeBase {
     }
 
     /**
+     * Restaura um item a partir da persistência preservando o preço unitário histórico.
+     */
+    public synchronized void restaurarItem(Integer numeroItem, Produto produto, int quantidade, double precoUnitario) {
+        if (produto == null || quantidade <= 0) {
+            return;
+        }
+        int num = (numeroItem != null && numeroItem > 0) ? numeroItem : itens.size() + 1;
+        ItemPedido item = new ItemPedido(num, produto, quantidade);
+        item.setPrecoUnitario(precoUnitario);
+        itens.add(item);
+    }
+
+    /**
      * Remove item pelo índice da lista.
      */
     public synchronized void removerItem(int index) {
@@ -168,25 +181,46 @@ public class Pedido extends EntidadeBase {
     }
 
     /**
-     * Aplica o desconto padrão da forma de pagamento ou desconto manual.
+     * Calcula o desconto efetivo aplicado (maior valor entre desconto automático da
+     * forma de pagamento e desconto manual, limitado ao subtotal bruto).
      */
-    public double getTotalComDesconto() {
+    public double getDescontoEfetivo() {
         double bruto = getSubtotalBruto();
         double descAuto = 0.0;
         if (formaPagamento != null) {
             descAuto = bruto * formaPagamento.getDescontoPadrao();
         }
         double descEfetivo = Math.max(descAuto, getValorDesconto());
-        return Math.max(0.0, bruto - descEfetivo);
+        return Math.min(bruto, Math.max(0.0, descEfetivo));
     }
 
     /**
-     * Conclui a venda, realizando a baixa no estoque de cada produto.
+     * Aplica o desconto padrão da forma de pagamento ou desconto manual.
+     */
+    public double getTotalComDesconto() {
+        return Math.max(0.0, getSubtotalBruto() - getDescontoEfetivo());
+    }
+
+    /**
+     * Conclui a venda, realizando a baixa atômica no estoque de cada produto.
      */
     public synchronized void finalizarVenda() {
         validar();
         if (this.status != StatusPedido.PENDENTE) {
             throw new IllegalStateException("Apenas pedidos pendentes podem ser finalizados.");
+        }
+        // Pré-valida estoque de TODOS os itens antes de debitar (atomicidade)
+        for (ItemPedido item : itens) {
+            Produto prod = item.getProduto();
+            int qtd = item.getQuantidade() != null ? item.getQuantidade() : 0;
+            if (prod == null) {
+                throw new IllegalStateException("Item de pedido sem produto associado.");
+            }
+            int disponivel = prod.getQuantidadeEstoque() != null ? prod.getQuantidadeEstoque() : 0;
+            if (disponivel < qtd) {
+                throw new IllegalStateException("Estoque insuficiente para o produto: " + prod.getNome()
+                        + ". Disponível: " + disponivel + ", Solicitado: " + qtd);
+            }
         }
         // Debita estoque de cada item
         for (ItemPedido item : itens) {
