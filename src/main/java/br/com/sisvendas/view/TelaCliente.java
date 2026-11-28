@@ -16,8 +16,9 @@ import java.util.List;
  * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaCliente extends JFrame {
+    private static final long serialVersionUID = 1L;
 
-    private final ClienteService clienteService = new ClienteService();
+    private final transient ClienteService clienteService = new ClienteService();
     private final TelaPrincipal telaPrincipal;
 
     private JTextField txtId;
@@ -128,10 +129,14 @@ public class TelaCliente extends JFrame {
 
         JPanel pnlFiltro = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         txtPesquisa = new JTextField(20);
+        txtPesquisa.addActionListener(e -> filtrarClientes());
         JButton btnBuscar = new JButton("🔍 Buscar por Nome");
         btnBuscar.addActionListener(e -> filtrarClientes());
         JButton btnListarTodos = new JButton("Ver Todos");
-        btnListarTodos.addActionListener(e -> carregarTabelaClientes());
+        btnListarTodos.addActionListener(e -> {
+            txtPesquisa.setText("");
+            carregarTabelaClientes();
+        });
 
         pnlFiltro.add(new JLabel("Pesquisar:"));
         pnlFiltro.add(txtPesquisa);

@@ -18,10 +18,11 @@ import java.util.List;
  * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaPrincipal extends JFrame {
+    private static final long serialVersionUID = 1L;
 
-    private final ClienteService clienteService = new ClienteService();
-    private final ProdutoService produtoService = new ProdutoService();
-    private final VendaService vendaService = new VendaService();
+    private final transient ClienteService clienteService = new ClienteService();
+    private final transient ProdutoService produtoService = new ProdutoService();
+    private final transient VendaService vendaService = new VendaService();
 
     private JLabel lblTotalClientes;
     private JLabel lblTotalProdutos;
@@ -60,7 +61,7 @@ public class TelaPrincipal extends JFrame {
         JMenu menuVendas = new JMenu("Vendas");
         JMenuItem itemNovaVenda = new JMenuItem("Realizar Venda (Tela de Negócio)");
         itemNovaVenda.addActionListener(e -> abrirTelaVenda());
-        JMenuItem itemConsultarVendas = new JMenuItem("Histórico e Consulta de Vendas");
+        JMenuItem itemConsultarVendas = new JMenuItem("Gerenciar / Histórico de Vendas (CRUD)");
         itemConsultarVendas.addActionListener(e -> abrirTelaConsultaVendas());
 
         menuVendas.add(itemNovaVenda);
@@ -166,11 +167,13 @@ public class TelaPrincipal extends JFrame {
         tabelaUltimasVendas.setRowHeight(24);
         tabelaUltimasVendas.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         JScrollPane scrollTabela = new JScrollPane(tabelaUltimasVendas);
-
-        pnlTabelaWrapper.add(pnlCards, BorderLayout.NORTH);
         pnlTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
 
-        pnlCentro.add(pnlTabelaWrapper, BorderLayout.CENTER);
+        JPanel pnlDashboard = new JPanel(new BorderLayout(0, 12));
+        pnlDashboard.add(pnlCards, BorderLayout.NORTH);
+        pnlDashboard.add(pnlTabelaWrapper, BorderLayout.CENTER);
+
+        pnlCentro.add(pnlDashboard, BorderLayout.CENTER);
         contentPane.add(pnlCentro, BorderLayout.CENTER);
 
         // Rodapé

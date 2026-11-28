@@ -16,8 +16,9 @@ import java.util.List;
  * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaProduto extends JFrame {
+    private static final long serialVersionUID = 1L;
 
-    private final ProdutoService produtoService = new ProdutoService();
+    private final transient ProdutoService produtoService = new ProdutoService();
     private final TelaPrincipal telaPrincipal;
 
     private JTextField txtId;
@@ -87,11 +88,15 @@ public class TelaProduto extends JFrame {
         gbc.gridx = 2; pnlForm.add(new JLabel("Categoria:"), gbc);
         gbc.gridx = 3; pnlForm.add(cbCategoria, gbc);
 
-        // Linha 2: Preço, Estoque e Estoque Mínimo
+        // Linha 2: Preço e Estoque
         gbc.gridx = 0; gbc.gridy = 2; pnlForm.add(new JLabel("Preço Unit. (R$):*"), gbc);
         gbc.gridx = 1; pnlForm.add(txtPreco, gbc);
         gbc.gridx = 2; pnlForm.add(new JLabel("Qtd. Estoque:*"), gbc);
         gbc.gridx = 3; pnlForm.add(txtEstoque, gbc);
+
+        // Linha 3: Estoque Mínimo
+        gbc.gridx = 0; gbc.gridy = 3; pnlForm.add(new JLabel("Estoque Mínimo:"), gbc);
+        gbc.gridx = 1; pnlForm.add(txtEstoqueMinimo, gbc);
 
         // Barra de Botões do CRUD
         JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 4));
@@ -126,10 +131,14 @@ public class TelaProduto extends JFrame {
 
         JPanel pnlFiltro = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         txtPesquisa = new JTextField(20);
+        txtPesquisa.addActionListener(e -> filtrarProdutos());
         JButton btnBuscar = new JButton("🔍 Buscar");
         btnBuscar.addActionListener(e -> filtrarProdutos());
         JButton btnListarTodos = new JButton("Ver Todos");
-        btnListarTodos.addActionListener(e -> carregarTabelaProdutos());
+        btnListarTodos.addActionListener(e -> {
+            txtPesquisa.setText("");
+            carregarTabelaProdutos();
+        });
 
         pnlFiltro.add(new JLabel("Pesquisar por Nome/Código:"));
         pnlFiltro.add(txtPesquisa);
@@ -220,6 +229,8 @@ public class TelaProduto extends JFrame {
             Integer id = txtId.getText().isEmpty() ? null : Integer.parseInt(txtId.getText());
             double preco = Double.parseDouble(txtPreco.getText().trim().replace(",", "."));
             int estoque = Integer.parseInt(txtEstoque.getText().trim());
+            int estoqueMinimo = txtEstoqueMinimo.getText().trim().isEmpty()
+                    ? 5 : Integer.parseInt(txtEstoqueMinimo.getText().trim());
 
             Produto p = new Produto(
                     id,
@@ -229,13 +240,14 @@ public class TelaProduto extends JFrame {
                     preco,
                     estoque
             );
+            p.setEstoqueMinimo(estoqueMinimo);
 
             produtoService.salvar(p);
             JOptionPane.showMessageDialog(this, "Produto salvo com sucesso na base de dados!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             limparFormulario();
             carregarTabelaProdutos();
         } catch (NumberFormatException nfe) {
-            JOptionPane.showMessageDialog(this, "Preço e Estoque devem conter valores numéricos válidos.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Preço, Estoque e Estoque Mínimo devem conter valores numéricos válidos.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao salvar produto: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -271,6 +283,7 @@ public class TelaProduto extends JFrame {
         cbCategoria.setSelectedIndex(0);
         txtPreco.setText("");
         txtEstoque.setText("");
+        txtEstoqueMinimo.setText("5");
         tabelaProdutos.clearSelection();
         txtNome.requestFocus();
     }

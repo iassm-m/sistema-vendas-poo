@@ -23,10 +23,11 @@ import java.util.List;
  * @author IASMIM DA SILVA MANN JOSÉ - 1250109566, REBECA MACHADO DE LIMA - 1250103657, SARAH GABRIELLA VIRGÍNIA DA SILVA - 1250106978, SILVANA GOMES DA SILVA - 1250109767
  */
 public class TelaVenda extends JFrame {
+    private static final long serialVersionUID = 1L;
 
-    private final ClienteService clienteService = new ClienteService();
-    private final ProdutoService produtoService = new ProdutoService();
-    private final VendaService vendaService = new VendaService();
+    private final transient ClienteService clienteService = new ClienteService();
+    private final transient ProdutoService produtoService = new ProdutoService();
+    private final transient VendaService vendaService = new VendaService();
     private final TelaPrincipal telaPrincipal;
 
     // Componentes de Seleção de Cliente
@@ -48,6 +49,7 @@ public class TelaVenda extends JFrame {
     // Componentes de Fechamento e Pagamento
     private JComboBox<FormaPagamento> cbFormaPagamento;
     private JTextField txtDesconto;
+    private JTextField txtObservacao;
     private JLabel lblSubtotalBruto;
     private JLabel lblValorDesconto;
     private JLabel lblTotalLiquido;
@@ -151,21 +153,31 @@ public class TelaVenda extends JFrame {
         JPanel pnlFechamento = new JPanel(new BorderLayout(10, 10));
         pnlFechamento.setBorder(BorderFactory.createTitledBorder("3. Fechamento e Pagamento"));
 
-        JPanel pnlPagto = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 8));
+        JPanel pnlPagto = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcPagto = new GridBagConstraints();
+        gbcPagto.insets = new Insets(4, 6, 4, 6);
+        gbcPagto.anchor = GridBagConstraints.WEST;
+
         cbFormaPagamento = new JComboBox<>(FormaPagamento.values());
         cbFormaPagamento.addActionListener(e -> recalcularTotais());
 
-        txtDesconto = new JTextField("0.00", 6);
+        txtDesconto = new JTextField("0.00", 7);
         txtDesconto.addActionListener(e -> recalcularTotais());
 
         JButton btnAplicarDesconto = new JButton("Aplicar Desconto");
-        btnAplicarDesconto.addActionListener(e -> recalcularTotais());
+        btnAplicarDesconto.addActionListener(e -> aplicarDescontoManual());
 
-        pnlPagto.add(new JLabel("Forma de Pagamento:"));
-        pnlPagto.add(cbFormaPagamento);
-        pnlPagto.add(new JLabel("Desconto Especial (R$):"));
-        pnlPagto.add(txtDesconto);
-        pnlPagto.add(btnAplicarDesconto);
+        txtObservacao = new JTextField(28);
+
+        gbcPagto.gridx = 0; gbcPagto.gridy = 0; pnlPagto.add(new JLabel("Forma de Pagamento:"), gbcPagto);
+        gbcPagto.gridx = 1; pnlPagto.add(cbFormaPagamento, gbcPagto);
+        gbcPagto.gridx = 2; pnlPagto.add(new JLabel("Desconto Especial (R$):"), gbcPagto);
+        gbcPagto.gridx = 3; pnlPagto.add(txtDesconto, gbcPagto);
+        gbcPagto.gridx = 4; pnlPagto.add(btnAplicarDesconto, gbcPagto);
+
+        gbcPagto.gridx = 0; gbcPagto.gridy = 1; pnlPagto.add(new JLabel("Observação:"), gbcPagto);
+        gbcPagto.gridx = 1; gbcPagto.gridwidth = 4; gbcPagto.fill = GridBagConstraints.HORIZONTAL;
+        pnlPagto.add(txtObservacao, gbcPagto);
 
         // Painel de Valores Totais
         JPanel pnlTotais = new JPanel(new GridLayout(3, 1, 4, 4));
@@ -234,11 +246,15 @@ public class TelaVenda extends JFrame {
     private void atualizarDadosCliente() {
         Cliente c = (Cliente) cbClientes.getSelectedItem();
         if (c != null) {
-            lblDadosCliente.setText(String.format("CPF: %s | Telefone: %s | Cidade: %s - %s",
-                    c.getCpf(), c.getTelefone(), c.getCidade(), c.getLogradouro()));
+            String tel = (c.getTelefone() != null && !c.getTelefone().trim().isEmpty()) ? c.getTelefone() : "N/I";
+            String cid = (c.getCidade() != null && !c.getCidade().trim().isEmpty()) ? c.getCidade() : "N/I";
+            String log = (c.getLogradouro() != null && !c.getLogradouro().trim().isEmpty()) ? " - " + c.getLogradouro() : "";
+            lblDadosCliente.setText(String.format("CPF: %s | Telefone: %s | Cidade: %s%s",
+                    c.getCpf(), tel, cid, log));
             pedidoAtual.setCliente(c);
         } else {
             lblDadosCliente.setText("Nenhum cliente cadastrado.");
+            pedidoAtual.setCliente(null);
         }
     }
 
@@ -255,13 +271,23 @@ public class TelaVenda extends JFrame {
             } else {
                 lblEstoqueDisponivel.setForeground(new Color(0, 102, 204));
             }
+        } else {
+            lblPrecoUnitario.setText("Preço: R$ 0,00");
+            lblEstoqueDisponivel.setForeground(Color.GRAY);
+            lblEstoqueDisponivel.setText("Estoque: 0 un.");
         }
     }
 
     private void adicionarItemAoCarrinho() {
-        Produto p = (Produto) cbProdutos.getSelectedItem();
-        if (p == null) {
+        Produto selecionado = (Produto) cbProdutos.getSelectedItem();
+        if (selecionado == null) {
             JOptionPane.showMessageDialog(this, "Selecione um produto.", "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Produto p = produtoService.buscarPorId(selecionado.getId());
+        if (p == null) {
+            JOptionPane.showMessageDialog(this, "Produto não encontrado na base de dados.", "Erro", JOptionPane.ERROR_MESSAGE);
+            carregarCombos();
             return;
         }
 
@@ -317,25 +343,42 @@ public class TelaVenda extends JFrame {
         recalcularTotais();
     }
 
+    private double lerDescontoManualValidado() {
+        String texto = txtDesconto.getText().trim().replace(",", ".");
+        if (texto.isEmpty()) {
+            return 0.0;
+        }
+        double valor = Double.parseDouble(texto);
+        if (valor < 0.0) {
+            throw new IllegalArgumentException("O desconto não pode ser negativo.");
+        }
+        return valor;
+    }
+
+    private void aplicarDescontoManual() {
+        try {
+            lerDescontoManualValidado();
+            recalcularTotais();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Informe um valor numérico válido para o desconto.", "Desconto Inválido", JOptionPane.WARNING_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Desconto Inválido", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     private void recalcularTotais() {
         FormaPagamento fp = (FormaPagamento) cbFormaPagamento.getSelectedItem();
         pedidoAtual.setFormaPagamento(fp);
 
         double descManual = 0.0;
         try {
-            descManual = Double.parseDouble(txtDesconto.getText().trim().replace(",", "."));
-        } catch (NumberFormatException ignored) {}
+            descManual = Math.max(0.0, lerDescontoManualValidado());
+        } catch (Exception ignored) {}
 
-        double descAuto = 0.0;
-        if (fp != null) {
-            descAuto = pedidoAtual.getSubtotalBruto() * fp.getDescontoPadrao();
-        }
-
-        double descTotal = Math.max(descManual, descAuto);
-        pedidoAtual.setValorDesconto(descTotal);
+        pedidoAtual.setValorDesconto(descManual);
 
         lblSubtotalBruto.setText(String.format("Subtotal Bruto: R$ %.2f", pedidoAtual.getSubtotalBruto()));
-        lblValorDesconto.setText(String.format("Desconto Total: R$ %.2f", descTotal));
+        lblValorDesconto.setText(String.format("Desconto Total: R$ %.2f", pedidoAtual.getDescontoEfetivo()));
         lblTotalLiquido.setText(String.format("VALOR FINAL: R$ %.2f", pedidoAtual.getTotalComDesconto()));
     }
 
@@ -346,7 +389,11 @@ public class TelaVenda extends JFrame {
                 JOptionPane.showMessageDialog(this, "Selecione um cliente válido.", "Validação", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            double descManual = lerDescontoManualValidado();
             pedidoAtual.setCliente(cli);
+            pedidoAtual.setFormaPagamento((FormaPagamento) cbFormaPagamento.getSelectedItem());
+            pedidoAtual.setValorDesconto(descManual);
+            pedidoAtual.setObservacao(txtObservacao.getText().trim());
             recalcularTotais();
 
             // Executa a transação de negócio (debita estoque e persiste)
@@ -369,6 +416,8 @@ public class TelaVenda extends JFrame {
             }
             resetarFormulario();
 
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(this, "Informe um valor numérico válido para o desconto.", "Desconto Inválido", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro na operação de negócio: " + ex.getMessage(), "Falha na Venda", JOptionPane.ERROR_MESSAGE);
         }
@@ -378,6 +427,7 @@ public class TelaVenda extends JFrame {
         this.pedidoAtual = new Pedido();
         modeloCarrinho.setRowCount(0);
         txtDesconto.setText("0.00");
+        txtObservacao.setText("");
         spQuantidade.setValue(1);
         carregarCombos();
         recalcularTotais();
