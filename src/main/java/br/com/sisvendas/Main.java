@@ -26,27 +26,26 @@ public class Main {
     public static void main(String[] args) {
         exibirBannerTerminal();
 
-        // 1. Inicialização da Base de Dados Simulada
-        System.out.println("[1/4] Inicializando simulador de banco de dados (BancoDadosMemoria)...");
-        BancoDadosMemoria bd = BancoDadosMemoria.getInstancia();
+        // 1. Inicialização da Base de Dados Simulada (sem alterar registros existentes)
+        System.out.println("[1/3] Inicializando simulador de banco de dados (BancoDadosMemoria)...");
+        BancoDadosMemoria.getInstancia();
         ClienteService clienteService = new ClienteService();
         ProdutoService produtoService = new ProdutoService();
         VendaService vendaService = new VendaService();
 
-        List<Cliente> clientes = clienteService.listarTodos();
-        List<Produto> produtos = produtoService.listarTodos();
-        List<Pedido> pedidos = vendaService.listarTodas();
+        exibirResumoBaseDados(clienteService, produtoService, vendaService);
 
-        System.out.printf("      -> TB_CLIENTES: %d clientes carregados na base de dados.%n", clientes.size());
-        System.out.printf("      -> TB_PRODUTOS: %d produtos cadastrados com controle de estoque.%n", produtos.size());
-        System.out.printf("      -> TB_PEDIDOS:  %d vendas no historico persistido.%n", pedidos.size());
+        // Executa demonstração via terminal apenas quando explicitamente solicitado (--demo)
+        for (String arg : args) {
+            if ("--demo".equalsIgnoreCase(arg)) {
+                System.out.println("\n[DEMO] Executando simulacao de demonstracao via terminal...");
+                executarDemonstracaoTerminal(clienteService, produtoService, vendaService);
+                break;
+            }
+        }
 
-        // 2. Demonstração das Regras de Negócio e CRUD pelo Terminal
-        System.out.println("\n[2/4] Executando demonstracao das operacoes de CRUD e Tela de Negocio via terminal...");
-        executarDemonstracaoTerminal(clienteService, produtoService, vendaService);
-
-        // 3. Inicialização da Interface Gráfica Swing
-        System.out.println("\n[3/4] Configurando Look and Feel da interface visual...");
+        // 2. Inicialização da Interface Gráfica Swing
+        System.out.println("\n[2/3] Configurando Look and Feel da interface visual...");
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -60,7 +59,8 @@ public class Main {
             } catch (Exception ignored) {}
         }
 
-        System.out.println("\n[4/4] Abrindo janela grafica principal (TelaPrincipal - Swing GUI)...");
+        // 3. Abertura da Janela Principal
+        System.out.println("[3/3] Abrindo janela grafica principal (TelaPrincipal - Swing GUI)...");
         SwingUtilities.invokeLater(() -> {
             TelaPrincipal principal = new TelaPrincipal();
             principal.setVisible(true);
@@ -82,38 +82,58 @@ public class Main {
         System.out.println("================================================================================\n");
     }
 
+    private static void exibirResumoBaseDados(ClienteService cliServ, ProdutoService prodServ, VendaService vendaServ) {
+        List<Cliente> clientes = cliServ.listarTodos();
+        List<Produto> produtos = prodServ.listarTodos();
+        List<Pedido> pedidos = vendaServ.listarTodas();
+
+        int vendasFinalizadas = 0;
+        double faturamento = 0.0;
+        for (Pedido p : pedidos) {
+            if (p.getStatus() == StatusPedido.FINALIZADO) {
+                vendasFinalizadas++;
+                faturamento += p.getTotalComDesconto();
+            }
+        }
+
+        int estoqueBaixo = 0;
+        for (Produto prod : produtos) {
+            if (prod.isEstoqueBaixo()) {
+                estoqueBaixo++;
+            }
+        }
+
+        System.out.printf("      -> TB_CLIENTES:     %d clientes carregados na base de dados.%n", clientes.size());
+        System.out.printf("      -> TB_PRODUTOS:     %d produtos cadastrados (%d com estoque baixo).%n", produtos.size(), estoqueBaixo);
+        System.out.printf("      -> TB_PEDIDOS:      %d pedidos no historico (%d finalizados | Faturamento: R$ %.2f).%n",
+                pedidos.size(), vendasFinalizadas, faturamento);
+    }
+
     private static void executarDemonstracaoTerminal(ClienteService cliServ, ProdutoService prodServ, VendaService vendaServ) {
-        // Exemplo de Cliente
-        Cliente c = cliServ.listarTodos().get(0);
-        System.out.printf("   [CLIENTE SELECIONADO] %s (CPF: %s - %s)%n", c.getNome(), c.getCpf(), c.getCidade());
+        List<Cliente> clientes = cliServ.listarTodos();
+        List<Produto> produtos = prodServ.listarTodos();
+        if (clientes.isEmpty() || produtos.isEmpty()) {
+            System.out.println("   [AVISO] Cadastre ao menos 1 cliente e 1 produto para executar a demonstracao.");
+            return;
+        }
 
-        // Exemplo de Produtos no catálogo e estoque antes da venda
-        Produto p1 = prodServ.listarTodos().get(1); // Mouse
-        Produto p2 = prodServ.listarTodos().get(2); // Teclado
-        System.out.printf("   [ESTOQUE INICIAL] %s: %d unidades disponíveis (R$ %.2f)%n", p1.getNome(), p1.getQuantidadeEstoque(), p1.getPrecoUnitario());
-        System.out.printf("   [ESTOQUE INICIAL] %s: %d unidades disponíveis (R$ %.2f)%n", p2.getNome(), p2.getQuantidadeEstoque(), p2.getPrecoUnitario());
+        Cliente c = clientes.get(0);
+        Produto p1 = produtos.size() > 1 ? produtos.get(1) : produtos.get(0);
+        if (p1.getQuantidadeEstoque() < 1) {
+            System.out.println("   [AVISO] Produto selecionado sem estoque disponivel para demonstracao.");
+            return;
+        }
 
-        // Simulação da Tela de Negócio: Montagem do Pedido
-        System.out.println("   [TELA DE NEGOCIO] Criando novo pedido e adicionando itens ao carrinho...");
-        Pedido novoPedido = new Pedido(null, "PED-TERM-01", c, FormaPagamento.PIX);
-        novoPedido.adicionarItem(p1, 2); // 2 mouses
-        novoPedido.adicionarItem(p2, 1); // 1 teclado
+        System.out.printf("   [CLIENTE SELECIONADO] %s (CPF: %s)%n", c.getNome(), c.getCpf());
+        System.out.printf("   [ESTOQUE INICIAL] %s: %d unidades disponiveis (R$ %.2f)%n",
+                p1.getNome(), p1.getQuantidadeEstoque(), p1.getPrecoUnitario());
 
-        System.out.printf("   [CARRINHO] Subtotal Bruto: R$ %.2f%n", novoPedido.getSubtotalBruto());
-        System.out.printf("   [PAGAMENTO] Forma escolhida: %s -> Desconto automatico de 5%%%n", novoPedido.getFormaPagamento().getDescricao());
-        System.out.printf("   [TOTAL FINAL] Valor Liquido a Pagar: R$ %.2f%n", novoPedido.getTotalComDesconto());
-
-        // Processamento da Venda com baixa em estoque
-        System.out.println("   [TRANSACAO] Finalizando venda e realizando baixa automatica no estoque...");
+        Pedido novoPedido = new Pedido(null, null, c, FormaPagamento.PIX);
+        novoPedido.adicionarItem(p1, 1);
         vendaServ.realizarVenda(novoPedido);
 
-        // Verificação do Estoque após a baixa
         System.out.printf("   [ESTOQUE ATUALIZADO] %s: agora restam %d unidades.%n", p1.getNome(), p1.getQuantidadeEstoque());
-        System.out.printf("   [ESTOQUE ATUALIZADO] %s: agora restam %d unidades.%n", p2.getNome(), p2.getQuantidadeEstoque());
-
-        // Emissão do comprovante fiscal no terminal
-        System.out.println("\n--- CUPOM FISCAL EMITIDO AUTOMATICAMENTE PELA TELA DE NEGOCIO ---");
+        System.out.println("\n--- CUPOM FISCAL EMITIDO PELA DEMONSTRACAO ---");
         System.out.print(vendaServ.gerarComprovanteVenda(novoPedido));
-        System.out.println("-----------------------------------------------------------------");
     }
 }

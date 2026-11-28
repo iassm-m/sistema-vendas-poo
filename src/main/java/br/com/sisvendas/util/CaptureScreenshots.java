@@ -104,7 +104,12 @@ public class CaptureScreenshots {
     private static void capturarCupomFiscal(File pasta) {
         try {
             VendaService serv = new VendaService();
-            Pedido p = serv.listarTodas().get(0);
+            java.util.List<Pedido> pedidos = serv.listarTodas();
+            if (pedidos.isEmpty()) {
+                System.out.println("  -> Nenhum pedido encontrado para gerar print de cupom.");
+                return;
+            }
+            Pedido p = pedidos.get(0);
             String textoCupom = serv.gerarComprovanteVenda(p);
 
             int w = 550;
